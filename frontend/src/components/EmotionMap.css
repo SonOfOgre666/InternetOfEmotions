@@ -1,0 +1,360 @@
+.emotion-map-container {
+  position: relative;
+  height: 600px;
+  width: 100%;
+}
+
+.leaflet-container {
+  background: #f0f9ff;
+}
+
+/* Override Leaflet's default popup styling for better size control */
+.leaflet-popup-content-wrapper {
+  max-width: 320px !important;
+  max-height: 400px !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+  max-width: 320px !important;
+  max-height: 400px !important;
+  overflow: hidden !important;
+  width: auto !important;
+  min-width: 250px !important;
+}
+
+/* Position popup tip correctly */
+.leaflet-popup-tip-container {
+  width: 20px;
+  height: 10px;
+  margin: 0 auto;
+}
+
+.map-legend {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+.map-legend h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+.legend-emoji {
+  font-size: 1rem;
+}
+
+.legend-label {
+  text-transform: capitalize;
+  color: #555;
+  font-weight: 500;
+}
+
+.emotion-popup {
+  min-width: 250px;
+}
+
+.country-popup {
+  min-width: 250px;
+  max-width: 320px;
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.country-popup.loading,
+.country-popup.error {
+  text-align: center;
+  padding: 1rem;
+}
+
+/* Custom scrollbar for popup */
+.country-popup::-webkit-scrollbar {
+  width: 6px;
+}
+
+.country-popup::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.country-popup::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 3px;
+}
+
+.country-popup::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+.country-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.country-emoji {
+  font-size: 1.5rem;
+}
+
+.country-details h3 {
+  margin: 0 0 0.5rem 0;
+  color: #1f2937;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* NEW: Top Events Section - Made more compact */
+.top-events {
+  background: #fef3c7;
+  border-left: 3px solid #f59e0b;
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin-bottom: 0.6rem;
+}
+
+.top-events h4 {
+  margin: 0 0 0.4rem 0;
+  font-size: 0.8rem;
+  color: #92400e;
+  font-weight: 700;
+}
+
+.events-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.event-item {
+  margin: 0.4rem 0;
+  padding: 0.4rem;
+  background: white;
+  border-radius: 3px;
+  border-left: 2px solid #fbbf24;
+}
+
+.event-item strong {
+  color: #b45309;
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+
+.event-count {
+  font-size: 0.7rem;
+  color: #78716c;
+  margin-left: 0.3rem;
+  font-weight: normal;
+}
+
+.event-preview {
+  margin: 0.3rem 0 0 0;
+  font-size: 0.75rem;
+  color: #57534e;
+  line-height: 1.3;
+  font-style: italic;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.country-stats {
+  background: #f9fafb;
+  padding: 0.5rem;
+  border-radius: 6px;
+  margin-bottom: 0.6rem;
+}
+
+.country-stats p {
+  margin: 0.25rem 0;
+  font-size: 0.75rem;
+  color: #374151;
+}
+
+.emotion-breakdown {
+  margin: 0.6rem 0;
+}
+
+.emotion-breakdown h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.8rem;
+  color: #4b5563;
+  font-weight: 600;
+}
+
+.emotion-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.emotion-bar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+}
+
+.emotion-bar-label {
+  min-width: 75px;
+  font-weight: 500;
+  text-transform: capitalize;
+  font-size: 0.75rem;
+}
+
+.emotion-bar-container {
+  flex: 1;
+  height: 16px;
+  background: #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.emotion-bar-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.3s ease;
+}
+
+.emotion-bar-count {
+  min-width: 25px;
+  text-align: right;
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+.algorithm-consensus {
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.algorithm-consensus h4 {
+  margin: 0 0 0.4rem 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.algorithm-consensus ul {
+  margin: 0;
+  padding-left: 1rem;
+  list-style-type: disc;
+  max-height: 80px;
+  overflow-y: auto;
+}
+
+.algorithm-consensus li {
+  margin: 0.2rem 0;
+  font-size: 0.65rem;
+  color: #9ca3af;
+}
+
+.emotion-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.emotion-emoji {
+  font-size: 1.5rem;
+}
+
+.emotion-details p {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.emotion-text {
+  font-style: italic;
+  color: #666;
+  padding: 0.5rem;
+  background: #f9fafb;
+  border-radius: 5px;
+  margin-top: 0.75rem !important;
+}
+
+.emotion-time {
+  font-size: 0.8rem !important;
+  color: #999;
+  margin-top: 0.5rem !important;
+}
+
+.emotion-link {
+  margin-top: 0.75rem !important;
+  text-align: center;
+}
+
+.emotion-link a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.8rem;
+  background: rgba(37, 99, 235, 0.1);
+  border-radius: 5px;
+  transition: all 0.2s ease;
+}
+
+.emotion-link a:hover {
+  background: rgba(37, 99, 235, 0.2);
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .emotion-map-container {
+    height: 400px;
+  }
+
+  .map-legend {
+    bottom: 10px;
+    right: 10px;
+    padding: 0.75rem;
+  }
+}

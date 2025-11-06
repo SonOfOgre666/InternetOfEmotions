@@ -1,0 +1,137 @@
+.stats-panel {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.stats-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #1f2937;
+}
+
+.total-count {
+  background: #667eea;
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.no-data {
+  text-align: center;
+  color: #6b7280;
+  padding: 2rem;
+  font-style: italic;
+}
+
+.chart-container {
+  margin-bottom: 1.5rem;
+}
+
+.chart-container h4 {
+  font-size: 1rem;
+  color: #374151;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.chart-wrapper {
+  padding: 0.5rem;
+}
+
+.emotion-breakdown {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 2px solid #e5e7eb;
+}
+
+.emotion-breakdown h4 {
+  font-size: 1rem;
+  color: #374151;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.emotion-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.emotion-row:hover {
+  background: #f3f4f6;
+}
+
+.emotion-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.emotion-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+.emotion-name {
+  font-weight: 500;
+  color: #374151;
+}
+
+.emotion-stats {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.emotion-count {
+  font-weight: 600;
+  color: #667eea;
+  font-size: 1.1rem;
+}
+
+.emotion-percent {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+/* Scrollbar styling */
+.stats-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.stats-panel::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.stats-panel::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 10px;
+}
+
+.stats-panel::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
