@@ -142,27 +142,6 @@ PATTERN_DETECTION_THRESHOLD = 5   # Clustering min
 - **Memory**: 4.5GB with ML models (RoBERTa + NER)
 - **Accuracy**: 70% individual posts, 78-82% country-level
 
-## 🐳 Docker
-
-Everything runs in Docker for easy deployment:
-
-```bash
-# Start
-docker-compose up -d
-
-# Logs
-docker logs -f emotions-backend
-
-# Stop
-docker-compose down
-```
-
-## ✅ Verification
-
-```bash
-python verify_backend.py
-```
-
 ## 📝 License
 
 MIT License - See project for details
