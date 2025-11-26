@@ -13,7 +13,7 @@
 ---
 
 ## 🎯 Main Use Case Diagram
-[![Main Use Case Diagram Image](Images/UseCase_Diagrams/MainUseCaseDiagram.png](Images/UseCase_Diagrams/MainUseCaseDiagram.png)
+[![Main Use Case Diagram Image](Images/UseCase_Diagrams/MainUseCaseDiagram.png)](Images/UseCase_Diagrams/MainUseCaseDiagram.png)
 
 
 ## 👥 Actor Overview
