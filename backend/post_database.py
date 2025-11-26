@@ -242,43 +242,64 @@ class PostDatabase:
         cursor.execute('SELECT COUNT(*) FROM raw_posts WHERE analyzed = 0')
         return cursor.fetchone()[0]
 
-    def get_posts_by_country(self, country: str, limit: int = 1000, collective_only: bool = True, max_age_days: int = 30) -> List[Dict]:
+    def get_posts_by_country(self, country: str, limit: int = 1000, collective_only: bool = True, max_age_days: int = None) -> List[Dict]:
         """
         Get posts for a country (filtered by is_collective flag to exclude personal posts)
-        
+
         Args:
             country: Country name
             limit: Maximum number of posts to return
             collective_only: If True, only return collective posts (not personal)
-            max_age_days: Maximum age of posts in days (default 30 days)
+            max_age_days: Maximum age of posts in days (None = no age filter, all posts)
+
+        NOTE: Age filtering is now done during Reddit fetch, not during query.
+        Posts in DB are already filtered, so we display all stored posts.
         """
         from datetime import datetime, timedelta
-        
+
         cursor = self.get_connection().cursor()
-        
-        # Calculate cutoff date (only posts newer than this)
-        cutoff_date = (datetime.now() - timedelta(days=max_age_days)).isoformat()
-        
+
         if collective_only:
             # Only return posts about country-level issues (filter out personal posts)
-            # AND only recent posts (within max_age_days)
-            cursor.execute('''
-                SELECT * FROM posts
-                WHERE country = ? 
-                  AND is_collective = 1
-                  AND timestamp > ?
-                ORDER BY timestamp DESC
-                LIMIT ?
-            ''', (country, cutoff_date, limit))
+            # NO age filter - posts are already age-filtered during fetch
+            if max_age_days is None:
+                # No age filter - return all stored posts
+                cursor.execute('''
+                    SELECT * FROM posts
+                    WHERE country = ?
+                      AND is_collective = 1
+                    ORDER BY timestamp DESC
+                    LIMIT ?
+                ''', (country, limit))
+            else:
+                # Optional age filter (for backwards compatibility)
+                cutoff_date = (datetime.now() - timedelta(days=max_age_days)).isoformat()
+                cursor.execute('''
+                    SELECT * FROM posts
+                    WHERE country = ?
+                      AND is_collective = 1
+                      AND timestamp > ?
+                    ORDER BY timestamp DESC
+                    LIMIT ?
+                ''', (country, cutoff_date, limit))
         else:
-            # Return all posts (including personal ones) but still filter by date
-            cursor.execute('''
-                SELECT * FROM posts
-                WHERE country = ?
-                  AND timestamp > ?
-                ORDER BY timestamp DESC
-                LIMIT ?
-            ''', (country, cutoff_date, limit))
+            # Return all posts (including personal ones)
+            if max_age_days is None:
+                cursor.execute('''
+                    SELECT * FROM posts
+                    WHERE country = ?
+                    ORDER BY timestamp DESC
+                    LIMIT ?
+                ''', (country, limit))
+            else:
+                cutoff_date = (datetime.now() - timedelta(days=max_age_days)).isoformat()
+                cursor.execute('''
+                    SELECT * FROM posts
+                    WHERE country = ?
+                      AND timestamp > ?
+                    ORDER BY timestamp DESC
+                    LIMIT ?
+                ''', (country, cutoff_date, limit))
 
         posts = []
         for row in cursor.fetchall():
@@ -324,39 +345,59 @@ class PostDatabase:
 
         return [row[0] for row in cursor.fetchall()]
 
-    def get_country_emotion_distribution(self, country: str, collective_only: bool = True, max_age_days: int = 30) -> Dict[str, int]:
+    def get_country_emotion_distribution(self, country: str, collective_only: bool = True, max_age_days: int = None) -> Dict[str, int]:
         """
         Get emotion distribution for a country (filtered by is_collective to exclude personal posts)
-        
+
         Args:
             country: Country name
             collective_only: If True, only count collective posts
-            max_age_days: Maximum age of posts in days (default 30 days)
+            max_age_days: Maximum age of posts in days (None = no age filter)
+
+        NOTE: Age filtering is now done during Reddit fetch, not during query.
         """
         from datetime import datetime, timedelta
-        
+
         cursor = self.get_connection().cursor()
-        
-        # Calculate cutoff date
-        cutoff_date = (datetime.now() - timedelta(days=max_age_days)).isoformat()
-        
+
         if collective_only:
-            cursor.execute('''
-                SELECT emotion, COUNT(*) as count
-                FROM posts
-                WHERE country = ? 
-                  AND is_collective = 1
-                  AND timestamp > ?
-                GROUP BY emotion
-            ''', (country, cutoff_date))
+            if max_age_days is None:
+                # No age filter - use all stored posts
+                cursor.execute('''
+                    SELECT emotion, COUNT(*) as count
+                    FROM posts
+                    WHERE country = ?
+                      AND is_collective = 1
+                    GROUP BY emotion
+                ''', (country,))
+            else:
+                # Optional age filter (backwards compatibility)
+                cutoff_date = (datetime.now() - timedelta(days=max_age_days)).isoformat()
+                cursor.execute('''
+                    SELECT emotion, COUNT(*) as count
+                    FROM posts
+                    WHERE country = ?
+                      AND is_collective = 1
+                      AND timestamp > ?
+                    GROUP BY emotion
+                ''', (country, cutoff_date))
         else:
-            cursor.execute('''
-                SELECT emotion, COUNT(*) as count
-                FROM posts
-                WHERE country = ?
-                  AND timestamp > ?
-                GROUP BY emotion
-            ''', (country, cutoff_date))
+            if max_age_days is None:
+                cursor.execute('''
+                    SELECT emotion, COUNT(*) as count
+                    FROM posts
+                    WHERE country = ?
+                    GROUP BY emotion
+                ''', (country,))
+            else:
+                cutoff_date = (datetime.now() - timedelta(days=max_age_days)).isoformat()
+                cursor.execute('''
+                    SELECT emotion, COUNT(*) as count
+                    FROM posts
+                    WHERE country = ?
+                      AND timestamp > ?
+                    GROUP BY emotion
+                ''', (country, cutoff_date))
 
         distribution = {}
         for row in cursor.fetchall():

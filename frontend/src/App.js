@@ -19,14 +19,14 @@ function App() {
     fetchEmotions();
     fetchStats();
 
-    // Refresh data every 60 seconds (reduced from 30)
+    // Refresh data every 30 seconds to keep map updated
     // Only if backend is available
     const interval = setInterval(() => {
       if (backendAvailable) {
         fetchEmotions();
         fetchStats();
       }
-    }, 60000);
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [backendAvailable]);
@@ -51,10 +51,13 @@ function App() {
         eventSource.onmessage = (event) => {
           const newPost = JSON.parse(event.data);
 
-          // Add to emotions (keep last 100)
+          // Add to emotions WITHOUT trimming (let the 60s refresh handle full updates)
+          // This prevents dots from disappearing as new posts come in
           setEmotions(prev => {
-            const newEmotions = [...prev, newPost];
-            return newEmotions.slice(-100);
+            // Check if post already exists (avoid duplicates)
+            const exists = prev.some(p => p.id === newPost.id);
+            if (exists) return prev;
+            return [...prev, newPost];
           });
 
           // Add to posts feed (keep last 20)
