@@ -25,16 +25,10 @@
 ## 🤖 Backend & Reddit API Use Cases
 [![Backend & Reddit API Use Cases1 Image](Images/UseCase_Diagrams/Backend&RedditAPIUseCases1.png)](Images/UseCase_Diagrams/Backend&RedditAPIUseCases1.png)
 
-[![Backend & Reddit API Use Cases2 Image](Images/UseCase_Diagrams/Backend&RedditAPIUseCases2.png)](Images/UseCase_Diagrams/Backend&RedditAPIUseCases2.png)
-
 ## 🧠 ML Pipeline Use Cases
-[![ML Pipeline Use Cases1 Image](Images/UseCase_Diagrams/ML-PipelineUseCases1.png)](Images/UseCase_Diagrams/ML-PipelineUseCases1.png)
-
 [![ML Pipeline Use Cases2 Image](Images/UseCase_Diagrams/ML-PipelineUseCases2.png)](Images/UseCase_Diagrams/ML-PipelineUseCases2.png)
 
 ## 🔄 Scheduler Use Cases
-[![Scheduler Use Cases1 Image](Images/UseCase_Diagrams/SchedulerUseCases1.png)](Images/UseCase_Diagrams/SchedulerUseCases1.png)
-
 [![Scheduler Use Cases2 Image](Images/UseCase_Diagrams/SchedulerUseCases2.png)](Images/UseCase_Diagrams/SchedulerUseCases2.png)
 
 ## 🎬 Complete System Flow
