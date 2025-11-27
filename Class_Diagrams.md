@@ -29,15 +29,6 @@
 ### Pattern Details
 [![Pattern Details Image](Images/Class_Diagrams/PatternDetails.png)](Images/Class_Diagrams/PatternDetails.png)
 
-
-## = Class Relationships
-
-### Complete Dependency Graph
-[![Complete Dependency Graph Image](Images/Class_Diagrams/CompleteDependencyGraph.png)](Images/Class_Diagrams/CompleteDependencyGraph.png)
-
-### Relationship Types
-[![Relationship Types Image](Images/Class_Diagrams/RelationshipTypes.png)](Images/Class_Diagrams/RelationshipTypes.png)
-
 ## <� Object Lifecycle
 [![Object Lifecycle Image](Images/Class_Diagrams/ObjectLifecycle.png)](Images/Class_Diagrams/ObjectLifecycle.png)
 
