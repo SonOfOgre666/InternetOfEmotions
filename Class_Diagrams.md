@@ -46,9 +46,6 @@
 ### Relationship Types
 [![Relationship Types Image](Images/Class_Diagrams/RelationshipTypes.png)](Images/Class_Diagrams/RelationshipTypes.png)
 
-## = Data Flow Through Classes
-[![Data Flow Through Classes Image](Images/Class_Diagrams/DataFlowThroughClasses.png)](Images/Class_Diagrams/DataFlowThroughClasses.png)
-
 ## <� Object Lifecycle
 [![Object Lifecycle Image](Images/Class_Diagrams/ObjectLifecycle.png)](Images/Class_Diagrams/ObjectLifecycle.png)
 
