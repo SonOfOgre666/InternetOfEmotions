@@ -49,9 +49,6 @@
 ## <� Object Lifecycle
 [![Object Lifecycle Image](Images/Class_Diagrams/ObjectLifecycle.png)](Images/Class_Diagrams/ObjectLifecycle.png)
 
-### Startup Sequence
-[![Startup Sequence Image](Images/Class_Diagrams/StartupSequence.png)](Images/Class_Diagrams/StartupSequence.png)
-
 ## = Thread Safety
 [![Thread Safety Image](Images/Class_Diagrams/ThreadSafety.png)](Images/Class_Diagrams/ThreadSafety.png)
 
@@ -60,9 +57,6 @@
 
 ## =� External Dependencies
 [![External Dependencies Image](Images/Class_Diagrams/ExternalDependencies.png)](Images/Class_Diagrams/ExternalDependencies.png)
-
-## <� Architecture Benefits
-[![Architecture Benefits Image](Images/Class_Diagrams/ArchitectureBenefits.png)](Images/Class_Diagrams/ArchitectureBenefits.png)
 
 
 ## =� File References
