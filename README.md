@@ -153,6 +153,10 @@
 
 ### Startup Sequence
 [![Startup Sequence Image](Images/Class_Diagrams/StartupSequence.png)](Images/Class_Diagrams/StartupSequence.png)
+
+### Database Schema
+[![Database Schema Image](Images/Class_Diagrams/DatabaseSchema.png)](Images/Class_Diagrams/DatabaseSchema.png)
+
 ---
 
 ## 🚀 Quick Start
