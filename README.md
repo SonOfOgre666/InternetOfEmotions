@@ -132,25 +132,7 @@
 
 ### System Overview
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     INTERNET OF EMOTIONS                    │
-│                    Layered Architecture                     │
-└─────────────────────────────────────────────────────────────┘
-
-┌───────────────┐   ┌───────────────┐   ┌───────────────┐
-│  Presentation │   │   Business    │   │  Data Access  │
-│     Layer     │──►│     Logic     │──►│     Layer     │
-│               │   │               │   │               │
-│ React + Leaflet│   │ Flask + ML    │   │ SQLite + ORM  │
-└───────────────┘   └───────────────┘   └───────────────┘
-                           │
-                           ▼
-                    ┌──────────────┐
-                    │   ML/AI      │
-                    │   Pipeline   │
-                    └──────────────┘
-```
+[![System Architecture Overview Image](Images/Class_Diagrams/SystemArchitectureOverview.png)](Images/Class_Diagrams/SystemArchitectureOverview.png)
 
 ### Data Flow
 
