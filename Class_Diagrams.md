@@ -24,14 +24,6 @@
 ## � Intelligence & Optimization Classes
 [![Intelligence & Optimization Classes Image](Images/Class_Diagrams/Intelligence&OptimizationClasses.png)](Images/Class_Diagrams/Intelligence&OptimizationClasses.png)
 
-## <� Design Patterns
-
-### Pattern Details
-[![Pattern Details Image](Images/Class_Diagrams/PatternDetails.png)](Images/Class_Diagrams/PatternDetails.png)
-
-## <� Object Lifecycle
-[![Object Lifecycle Image](Images/Class_Diagrams/ObjectLifecycle.png)](Images/Class_Diagrams/ObjectLifecycle.png)
-
 ## = Thread Safety
 [![Thread Safety Image](Images/Class_Diagrams/ThreadSafety.png)](Images/Class_Diagrams/ThreadSafety.png)
 
