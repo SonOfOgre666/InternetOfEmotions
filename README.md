@@ -151,6 +151,8 @@
 9. **CircularRotation** (`app.py`): Fair country scheduling
 10. **MultimodalAnalyzer** (`multimodal_analyzer.py`): Image/video analysis
 
+### Startup Sequence
+[![Startup Sequence Image](Images/Class_Diagrams/StartupSequence.png)](Images/Class_Diagrams/StartupSequence.png)
 ---
 
 ## 🚀 Quick Start
