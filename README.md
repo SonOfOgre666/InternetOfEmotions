@@ -136,12 +136,7 @@
 
 ### Data Flow
 
-```
-Reddit API → Fetch Posts → Filter & Dedupe → Store Raw
-                                                  ↓
-Frontend ← API Response ← Aggregate ← Analyze ← Queue
-            (Cached)                   (ML)
-```
+[![Data Flow Through Classes Image](Images/Class_Diagrams/DataFlowThroughClasses.png)](Images/Class_Diagrams/DataFlowThroughClasses.png)
 
 ### Core Components
 
