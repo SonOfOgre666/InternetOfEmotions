@@ -163,6 +163,9 @@
 ### Object Lifecycle
 [![Object Lifecycle Image](Images/Class_Diagrams/ObjectLifecycle.png)](Images/Class_Diagrams/ObjectLifecycle.png)
 
+### External Dependencies
+[![External Dependencies Image](Images/Class_Diagrams/ExternalDependencies.png)](Images/Class_Diagrams/ExternalDependencies.png)
+
 ---
 
 ## 🚀 Quick Start
