@@ -20,15 +20,6 @@
 ## Intelligence & Optimization Classes
 [![Intelligence & Optimization Classes Image](Images/Class_Diagrams/Intelligence&OptimizationClasses.png)](Images/Class_Diagrams/Intelligence&OptimizationClasses.png)
 
-## Thread Safety
-[![Thread Safety Image](Images/Class_Diagrams/ThreadSafety.png)](Images/Class_Diagrams/ThreadSafety.png)
-
-## Class Metrics
-[![Class Metrics Image](Images/Class_Diagrams/ClassMetrics.png)](Images/Class_Diagrams/ClassMetrics.png)
-
-## External Dependencies
-[![External Dependencies Image](Images/Class_Diagrams/ExternalDependencies.png)](Images/Class_Diagrams/ExternalDependencies.png)
-
 
 ## File References
 
