@@ -157,6 +157,9 @@
 ### Database Schema
 [![Database Schema Image](Images/Class_Diagrams/DatabaseSchema.png)](Images/Class_Diagrams/DatabaseSchema.png)
 
+### Complete Dependency Graph
+[![Complete Dependency Graph Image](Images/Class_Diagrams/CompleteDependencyGraph.png)](Images/Class_Diagrams/CompleteDependencyGraph.png)
+
 ---
 
 ## 🚀 Quick Start
