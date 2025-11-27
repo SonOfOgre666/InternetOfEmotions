@@ -7,8 +7,6 @@
 4. [Backend & Reddit API Use Cases](#backend--reddit-api-use-cases)
 5. [ML Pipeline Use Cases](#ml-pipeline-use-cases)
 6. [Scheduler Use Cases](#scheduler-use-cases)
-7. [Database Use Cases](#database-use-cases)
-8. [Use Case Relationships](#use-case-relationships)
 
 ---
 
