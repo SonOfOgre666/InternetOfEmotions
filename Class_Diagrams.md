@@ -24,15 +24,7 @@
 ## � Intelligence & Optimization Classes
 [![Intelligence & Optimization Classes Image](Images/Class_Diagrams/Intelligence&OptimizationClasses.png)](Images/Class_Diagrams/Intelligence&OptimizationClasses.png)
 
-## =� Database Schema
-[![Database Schema Image](Images/Class_Diagrams/DatabaseSchema.png)](Images/Class_Diagrams/DatabaseSchema.png)
-
-### Database Indexes
-[![Database Indexes Image](Images/Class_Diagrams/DatabaseIndexes.png)](Images/Class_Diagrams/DatabaseIndexes.png)
-
-
 ## <� Design Patterns
-[![Design Patterns Image](Images/Class_Diagrams/DesignPatterns.png)](Images/Class_Diagrams/DesignPatterns.png)
 
 ### Pattern Details
 [![Pattern Details Image](Images/Class_Diagrams/PatternDetails.png)](Images/Class_Diagrams/PatternDetails.png)
