@@ -12,10 +12,6 @@
 
 ---
 
-## <� System Architecture Overview
-[![System Architecture Overview Image](Images/Class_Diagrams/SystemArchitectureOverview.png)](Images/Class_Diagrams/SystemArchitectureOverview.png)
-
-
 ## <� Main Class Diagram
 [![Main Class Diagram Image](Images/Class_Diagrams/MainClassDiagram.png)](Images/Class_Diagrams/MainClassDiagram.png)
 
