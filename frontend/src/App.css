@@ -143,3 +143,11 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+.leaflet-bottom {
+  display: none;
+}
+
+.leaflet-bottom .leaflet-right {
+  display: none;
+}
