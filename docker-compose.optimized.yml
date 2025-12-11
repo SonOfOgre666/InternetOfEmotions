@@ -1,0 +1,613 @@
+# OPTIMIZED CONFIGURATION FOR LIMITED RESOURCES (7.4GB RAM)
+# All services run with memory limits and CPU constraints
+# Full functionality maintained with efficient resource usage
+
+services:
+  # ============================================================================
+  # INFRASTRUCTURE SERVICES (Memory-Optimized)
+  # ============================================================================
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: ioe_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: internet_of_emotions
+      POSTGRES_USER: ioe_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secure_password_change_me}
+      # Memory optimization
+      POSTGRES_SHARED_BUFFERS: "256MB"
+      POSTGRES_EFFECTIVE_CACHE_SIZE: "512MB"
+      POSTGRES_WORK_MEM: "16MB"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/services/database/init.sql:/docker-entrypoint-initdb.d/init.sql:Z
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ioe_user -d internet_of_emotions"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - ioe_network
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: ioe_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-ioe_user}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-secure_password_change_me}
+      RABBITMQ_DEFAULT_VHOST: /
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - ioe_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: ioe_redis
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD:-secure_password_change_me}
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save 60 1000
+    volumes:
+      - redis_data:/data
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - ioe_network
+
+  elasticsearch:
+    image: elasticsearch:8.11.0
+    container_name: ioe_elasticsearch
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      # OPTIMIZED: Reduced from 1g to 512m heap
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - cluster.routing.allocation.disk.threshold_enabled=true
+      - cluster.routing.allocation.disk.watermark.low=85%
+      - cluster.routing.allocation.disk.watermark.high=90%
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 768M
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - ioe_network
+
+  # ============================================================================
+  # LIGHTWEIGHT MICROSERVICES (100-200MB each)
+  # ============================================================================
+
+  api_gateway:
+    build:
+      context: ./backend/services/api_gateway
+      dockerfile: Dockerfile
+    container_name: ioe_api_gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - SERVICE_NAME=api_gateway
+      - SERVICE_PORT=8000
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - postgres
+      - rabbitmq
+      - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - ioe_network
+
+  post_fetcher:
+    build:
+      context: ./backend/services/post_fetcher
+      dockerfile: Dockerfile
+    container_name: ioe_post_fetcher
+    ports:
+      - "5001:5001"
+    environment:
+      - SERVICE_NAME=post_fetcher
+      - SERVICE_PORT=5001
+      - DATABASE_URL=postgresql://ioe_user:${DB_PASSWORD:-secure_password_change_me}@postgres:5432/internet_of_emotions
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-ioe_user}:${RABBITMQ_PASSWORD:-secure_password_change_me}@rabbitmq:5672/
+      - REDDIT_CLIENT_ID=${REDDIT_CLIENT_ID}
+      - REDDIT_CLIENT_SECRET=${REDDIT_CLIENT_SECRET}
+      - REDDIT_USER_AGENT=${REDDIT_USER_AGENT:-InternetOfEmotions/2.0}
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - postgres
+      - rabbitmq
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - ioe_network
+
+  url_extractor:
+    build:
+      context: ./backend/services/url_extractor
+      dockerfile: Dockerfile
+    container_name: ioe_url_extractor
+    ports:
+      - "5002:5002"
+    environment:
+      - SERVICE_NAME=url_extractor
+      - SERVICE_PORT=5002
+      - DATABASE_URL=postgresql://ioe_user:${DB_PASSWORD:-secure_password_change_me}@postgres:5432/internet_of_emotions
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-ioe_user}:${RABBITMQ_PASSWORD:-secure_password_change_me}@rabbitmq:5672/
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - postgres
+      - rabbitmq
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5002/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - ioe_network
+
+  # ============================================================================
+  # ML ANALYZER - MEMORY-OPTIMIZED (Most Resource-Intensive)
+  # ============================================================================
+
+  ml_analyzer:
+    build:
+      context: ./backend/services/ml_analyzer
+      dockerfile: Dockerfile
+    container_name: ioe_ml_analyzer
+    ports:
+      - "5003:5003"
+    environment:
+      - SERVICE_NAME=ml_analyzer
+      - SERVICE_PORT=5003
+      - DATABASE_URL=postgresql://ioe_user:${DB_PASSWORD:-secure_password_change_me}@postgres:5432/internet_of_emotions
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-ioe_user}:${RABBITMQ_PASSWORD:-secure_password_change_me}@rabbitmq:5672/
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+      # ML OPTIMIZATION SETTINGS
+      - TRANSFORMERS_CACHE=/tmp/transformers_cache
+      - HF_HOME=/tmp/huggingface
+      - TOKENIZERS_PARALLELISM=false
+      - OMP_NUM_THREADS=2
+      - MKL_NUM_THREADS=2
+      - OPENBLAS_NUM_THREADS=2
+      # Lazy loading - models load on-demand
+      - LAZY_LOAD_MODELS=true
+      - MODEL_UNLOAD_TIMEOUT=300  # Unload after 5min idle
+    volumes:
+      # Cache ML models to avoid re-downloading
+      - ml_models:/tmp/transformers_cache
+      - ml_models:/tmp/huggingface
+    depends_on:
+      - postgres
+      - rabbitmq
+    deploy:
+      resources:
+        limits:
+          cpus: '3.0'
+          memory: 2G  # Critical: ML models need this
+        reservations:
+          cpus: '1.0'
+          memory: 512M  # Start small, grow as needed
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5003/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - ioe_network
+
+  db_cleanup:
+    build:
+      context: ./backend/services/db_cleanup
+      dockerfile: Dockerfile
+    container_name: ioe_db_cleanup
+    ports:
+      - "5004:5004"
+    environment:
+      - SERVICE_NAME=db_cleanup
+      - SERVICE_PORT=5004
+      - DATABASE_URL=postgresql://ioe_user:${DB_PASSWORD:-secure_password_change_me}@postgres:5432/internet_of_emotions
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+      - CLEANUP_SCHEDULE_HOUR=3  # Run at 3 AM
+    depends_on:
+      - postgres
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5004/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - ioe_network
+
+  country_aggregation:
+    build:
+      context: ./backend/services/country_aggregation
+      dockerfile: Dockerfile
+    container_name: ioe_country_aggregation
+    ports:
+      - "5005:5005"
+    environment:
+      - SERVICE_NAME=country_aggregation
+      - SERVICE_PORT=5005
+      - DATABASE_URL=postgresql://ioe_user:${DB_PASSWORD:-secure_password_change_me}@postgres:5432/internet_of_emotions
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-ioe_user}:${RABBITMQ_PASSWORD:-secure_password_change_me}@rabbitmq:5672/
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - postgres
+      - rabbitmq
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5005/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - ioe_network
+
+  cache_service:
+    build:
+      context: ./backend/services/cache_service
+      dockerfile: Dockerfile
+    container_name: ioe_cache_service
+    ports:
+      - "5006:5006"
+    environment:
+      - SERVICE_NAME=cache_service
+      - SERVICE_PORT=5006
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-secure_password_change_me}@redis:6379/0
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5006/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - ioe_network
+
+  search_service:
+    build:
+      context: ./backend/services/search_service
+      dockerfile: Dockerfile
+    container_name: ioe_search_service
+    ports:
+      - "5007:5007"
+    environment:
+      - SERVICE_NAME=search_service
+      - SERVICE_PORT=5007
+      - DATABASE_URL=postgresql://ioe_user:${DB_PASSWORD:-secure_password_change_me}@postgres:5432/internet_of_emotions
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - postgres
+      - elasticsearch
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5007/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - ioe_network
+
+  stats_service:
+    build:
+      context: ./backend/services/stats_service
+      dockerfile: Dockerfile
+    container_name: ioe_stats_service
+    ports:
+      - "5008:5008"
+    environment:
+      - SERVICE_NAME=stats_service
+      - SERVICE_PORT=5008
+      - DATABASE_URL=postgresql://ioe_user:${DB_PASSWORD:-secure_password_change_me}@postgres:5432/internet_of_emotions
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-secure_password_change_me}@redis:6379/0
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - postgres
+      - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5008/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - ioe_network
+
+  scheduler:
+    build:
+      context: ./backend/services/scheduler
+      dockerfile: Dockerfile
+    container_name: ioe_scheduler
+    ports:
+      - "5010:5010"
+    environment:
+      - SERVICE_NAME=scheduler
+      - SERVICE_PORT=5010
+      - DATABASE_URL=postgresql://ioe_user:${DB_PASSWORD:-secure_password_change_me}@postgres:5432/internet_of_emotions
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-ioe_user}:${RABBITMQ_PASSWORD:-secure_password_change_me}@rabbitmq:5672/
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - postgres
+      - rabbitmq
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5010/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - ioe_network
+
+  collective_analyzer:
+    build:
+      context: ./backend/services/collective_analyzer
+      dockerfile: Dockerfile
+    container_name: ioe_collective_analyzer
+    ports:
+      - "5011:5011"
+    environment:
+      - SERVICE_NAME=collective_analyzer
+      - SERVICE_PORT=5011
+      - DATABASE_URL=postgresql://ioe_user:${DB_PASSWORD:-secure_password_change_me}@postgres:5432/internet_of_emotions
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-ioe_user}:${RABBITMQ_PASSWORD:-secure_password_change_me}@rabbitmq:5672/
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+      # ML optimization
+      - TRANSFORMERS_CACHE=/tmp/transformers_cache
+      - TOKENIZERS_PARALLELISM=false
+    volumes:
+      - ml_models:/tmp/transformers_cache
+    depends_on:
+      - postgres
+      - rabbitmq
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5011/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - ioe_network
+
+  cross_country_detector:
+    build:
+      context: ./backend/services/cross_country_detector
+      dockerfile: Dockerfile
+    container_name: ioe_cross_country_detector
+    ports:
+      - "5012:5012"
+    environment:
+      - SERVICE_NAME=cross_country_detector
+      - SERVICE_PORT=5012
+      - DATABASE_URL=postgresql://ioe_user:${DB_PASSWORD:-secure_password_change_me}@postgres:5432/internet_of_emotions
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-ioe_user}:${RABBITMQ_PASSWORD:-secure_password_change_me}@rabbitmq:5672/
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+      # ML optimization
+      - TRANSFORMERS_CACHE=/tmp/transformers_cache
+      - TOKENIZERS_PARALLELISM=false
+    volumes:
+      - ml_models:/tmp/transformers_cache
+    depends_on:
+      - postgres
+      - rabbitmq
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5012/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - ioe_network
+
+  # ============================================================================
+  # FRONTEND
+  # ============================================================================
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ioe_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api_gateway
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - ioe_network
+
+networks:
+  ioe_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+  redis_data:
+  elasticsearch_data:
+  ml_models:  # Shared ML model cache

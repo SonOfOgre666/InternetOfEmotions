@@ -29,6 +29,8 @@ const CountryPopup = ({ country, emotion }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';  // ✓ Added
+
   const fetchCountryData = async () => {
     if (countryData) return; // Already loaded
     
@@ -36,7 +38,7 @@ const CountryPopup = ({ country, emotion }) => {
     setError(null);
     
     try {
-      const response = await fetch(`http://localhost:5000/api/country/${country}`);
+      const response = await fetch(`${API_BASE}/api/country/${country}`);  // ✓ Fixed: use API_BASE
       if (!response.ok) throw new Error('Failed to fetch country data');
       
       const data = await response.json();

@@ -1,0 +1,498 @@
+services:
+  # ============================================================================
+  # INFRASTRUCTURE SERVICES
+  # ============================================================================
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: ioe_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: internet_of_emotions
+      POSTGRES_USER: ioe_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secure_password_change_me}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/services/database/init.sql:/docker-entrypoint-initdb.d/init.sql:Z
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ioe_user -d internet_of_emotions"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: no
+    networks:
+      - ioe_network
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: ioe_rabbitmq
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-ioe_user}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-secure_password_change_me}
+      RABBITMQ_DEFAULT_VHOST: /
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: no
+    networks:
+      - ioe_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: ioe_redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-secure_password_change_me}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: no
+    networks:
+      - ioe_network
+
+  elasticsearch:
+    image: elasticsearch:8.11.0
+    container_name: ioe_elasticsearch
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: no
+    networks:
+      - ioe_network
+
+  # ============================================================================
+  # MICROSERVICES
+  # ============================================================================
+
+  post_fetcher:
+    build:
+      context: ./backend/services/post_fetcher
+      dockerfile: Dockerfile
+    container_name: ioe_post_fetcher
+    ports:
+      - "5001:5001"
+    environment:
+      - SERVICE_NAME=post_fetcher
+      - SERVICE_PORT=5001
+      - DATABASE_URL=postgresql://ioe_user:${DB_PASSWORD:-secure_password_change_me}@postgres:5432/internet_of_emotions
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-ioe_user}:${RABBITMQ_PASSWORD:-secure_password_change_me}@rabbitmq:5672/
+      - REDDIT_CLIENT_ID=${REDDIT_CLIENT_ID}
+      - REDDIT_CLIENT_SECRET=${REDDIT_CLIENT_SECRET}
+      - REDDIT_USER_AGENT=${REDDIT_USER_AGENT:-InternetOfEmotions/2.0}
+      - MAX_POST_AGE_DAYS=30
+      - FETCH_INTERVAL_SECONDS=300
+      - LOG_LEVEL=INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: no
+    networks:
+      - ioe_network
+
+  url_extractor:
+    build:
+      context: ./backend/services/url_extractor
+      dockerfile: Dockerfile
+    container_name: ioe_url_extractor
+    ports:
+      - "5002:5002"
+    environment:
+      - SERVICE_NAME=url_extractor
+      - SERVICE_PORT=5002
+      - DATABASE_URL=postgresql://ioe_user:${DB_PASSWORD:-secure_password_change_me}@postgres:5432/internet_of_emotions
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-ioe_user}:${RABBITMQ_PASSWORD:-secure_password_change_me}@rabbitmq:5672/
+      - EXTRACTION_TIMEOUT_SECONDS=30
+      - MAX_CONTENT_LENGTH=50000
+      - LOG_LEVEL=INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: no
+    networks:
+      - ioe_network
+
+  ml_analyzer:
+    build:
+      context: ./backend/services/ml_analyzer
+      dockerfile: Dockerfile
+    container_name: ioe_ml_analyzer
+    ports:
+      - "5003:5003"
+    environment:
+      - SERVICE_NAME=ml_analyzer
+      - SERVICE_PORT=5003
+      - DATABASE_URL=postgresql://ioe_user:${DB_PASSWORD:-secure_password_change_me}@postgres:5432/internet_of_emotions
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-ioe_user}:${RABBITMQ_PASSWORD:-secure_password_change_me}@rabbitmq:5672/
+      - BATCH_SIZE=50
+      - MODEL_IDLE_TIMEOUT=600
+      - LOG_LEVEL=INFO
+    volumes:
+      - ml_models:/app/models  # Cache ML models
+    deploy:
+      resources:
+        limits:
+          memory: 5G
+        reservations:
+          memory: 3G
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: no
+    networks:
+      - ioe_network
+
+  db_cleanup:
+    build:
+      context: ./backend/services/db_cleanup
+      dockerfile: Dockerfile
+    container_name: ioe_db_cleanup
+    ports:
+      - "5004:5004"
+    environment:
+      - SERVICE_NAME=db_cleanup
+      - SERVICE_PORT=5004
+      - DATABASE_URL=postgresql://ioe_user:${DB_PASSWORD:-secure_password_change_me}@postgres:5432/internet_of_emotions
+      - CLEANUP_INTERVAL_HOURS=24
+      - MAX_POST_AGE_DAYS=30
+      - CLEANUP_HOUR=3  # 3 AM
+      - LOG_LEVEL=INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: no
+    networks:
+      - ioe_network
+
+  country_aggregation:
+    build:
+      context: ./backend/services/country_aggregation
+      dockerfile: Dockerfile
+    container_name: ioe_country_aggregation
+    ports:
+      - "5005:5005"
+    environment:
+      - SERVICE_NAME=country_aggregation
+      - SERVICE_PORT=5005
+      - DATABASE_URL=postgresql://ioe_user:${DB_PASSWORD:-secure_password_change_me}@postgres:5432/internet_of_emotions
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-ioe_user}:${RABBITMQ_PASSWORD:-secure_password_change_me}@rabbitmq:5672/
+      - AGGREGATION_INTERVAL_SECONDS=60
+      - LOG_LEVEL=INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: no
+    networks:
+      - ioe_network
+
+  cache_service:
+    build:
+      context: ./backend/services/cache_service
+      dockerfile: Dockerfile
+    container_name: ioe_cache_service
+    ports:
+      - "5006:5006"
+    environment:
+      - SERVICE_NAME=cache_service
+      - SERVICE_PORT=5006
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-secure_password_change_me}@redis:6379/0
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-ioe_user}:${RABBITMQ_PASSWORD:-secure_password_change_me}@rabbitmq:5672/
+      - DEFAULT_TTL=30
+      - LOG_LEVEL=INFO
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: no
+    networks:
+      - ioe_network
+
+  search_service:
+    build:
+      context: ./backend/services/search_service
+      dockerfile: Dockerfile
+    container_name: ioe_search_service
+    ports:
+      - "5007:5007"
+    environment:
+      - SERVICE_NAME=search_service
+      - SERVICE_PORT=5007
+      - DATABASE_URL=postgresql://ioe_user:${DB_PASSWORD:-secure_password_change_me}@postgres:5432/internet_of_emotions
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-ioe_user}:${RABBITMQ_PASSWORD:-secure_password_change_me}@rabbitmq:5672/
+      - LOG_LEVEL=INFO
+    volumes:
+      - search_indexes:/app/indexes  # FAISS indexes
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: no
+    networks:
+      - ioe_network
+
+  stats_service:
+    build:
+      context: ./backend/services/stats_service
+      dockerfile: Dockerfile
+    container_name: ioe_stats_service
+    ports:
+      - "5008:5008"
+    environment:
+      - SERVICE_NAME=stats_service
+      - SERVICE_PORT=5008
+      - DATABASE_URL=postgresql://ioe_user:${DB_PASSWORD:-secure_password_change_me}@postgres:5432/internet_of_emotions
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-ioe_user}:${RABBITMQ_PASSWORD:-secure_password_change_me}@rabbitmq:5672/
+      - LOG_LEVEL=INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: no
+    networks:
+      - ioe_network
+
+  # ============================================================================
+  # API GATEWAY
+  # ============================================================================
+
+  api_gateway:
+    build:
+      context: ./backend/services/api_gateway
+      dockerfile: Dockerfile
+    container_name: ioe_api_gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - SERVICE_NAME=api_gateway
+      - SERVICE_PORT=8000
+      - POST_FETCHER_URL=http://post_fetcher:5001
+      - URL_EXTRACTOR_URL=http://url_extractor:5002
+      - ML_ANALYZER_URL=http://ml_analyzer:5003
+      - DB_CLEANUP_URL=http://db_cleanup:5004
+      - COUNTRY_AGGREGATION_URL=http://country_aggregation:5005
+      - CACHE_SERVICE_URL=http://cache_service:5006
+      - SEARCH_SERVICE_URL=http://search_service:5007
+      - STATS_SERVICE_URL=http://stats_service:5008
+      - RATE_LIMIT_PER_MINUTE=100
+      - LOG_LEVEL=INFO
+    depends_on:
+      - post_fetcher
+      - url_extractor
+      - ml_analyzer
+      - db_cleanup
+      - country_aggregation
+      - cache_service
+      - search_service
+      - stats_service
+    restart: no
+    networks:
+      - ioe_network
+
+  # ============================================================================
+  # FRONTEND
+  # ============================================================================
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ioe_frontend
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+    depends_on:
+      - api_gateway
+    restart: no
+    networks:
+      - ioe_network
+
+  # ============================================================================
+  # ADVANCED ML MICROSERVICES
+  # ============================================================================
+
+  scheduler:
+    build:
+      context: ./backend/services/scheduler
+      dockerfile: Dockerfile
+    container_name: ioe_scheduler
+    ports:
+      - "5010:5000"
+    environment:
+      - SERVICE_NAME=scheduler
+      - DATABASE_URL=postgresql://ioe_user:${DB_PASSWORD:-secure_password_change_me}@postgres:5432/internet_of_emotions
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-ioe_user}:${RABBITMQ_PASSWORD:-secure_password_change_me}@rabbitmq:5672/
+    volumes:
+      - ./backend/.venv:/backend/.venv:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: no
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - ioe_network
+
+  collective_analyzer:
+    build:
+      context: ./backend/services/collective_analyzer
+      dockerfile: Dockerfile
+    container_name: ioe_collective_analyzer
+    ports:
+      - "5011:5000"
+    environment:
+      - SERVICE_NAME=collective_analyzer
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-ioe_user}:${RABBITMQ_PASSWORD:-secure_password_change_me}@rabbitmq:5672/
+    volumes:
+      - ml_models:/root/.cache/huggingface
+      - ./backend/.venv:/backend/.venv:ro
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: no
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    networks:
+      - ioe_network
+  cross_country_detector:
+    build:
+      context: ./backend/services/cross_country_detector
+      dockerfile: Dockerfile
+    container_name: ioe_cross_country_detector
+    ports:
+      - "5012:5000"
+    environment:
+      - SERVICE_NAME=cross_country_detector
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-ioe_user}:${RABBITMQ_PASSWORD:-secure_password_change_me}@rabbitmq:5672/
+    volumes:
+      - ml_models:/root/.cache/huggingface
+      - ./backend/.venv:/backend/.venv:ro
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: no
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    networks:
+      - ioe_network
+
+  # ============================================================================
+  # MONITORING (Optional)
+  # ============================================================================
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ioe_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    restart: no
+    networks:
+      - ioe_network
+    profiles:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ioe_grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana-dashboards:/etc/grafana/provisioning/dashboards
+    depends_on:
+      - prometheus
+    restart: no
+    networks:
+      - ioe_network
+    profiles:
+      - monitoring
+
+# ============================================================================
+# VOLUMES
+# ============================================================================
+
+volumes:
+  postgres_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+  redis_data:
+    driver: local
+  elasticsearch_data:
+    driver: local
+  ml_models:
+    driver: local
+  search_indexes:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+# ============================================================================
+# NETWORKS
+# ============================================================================
+
+networks:
+  ioe_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16

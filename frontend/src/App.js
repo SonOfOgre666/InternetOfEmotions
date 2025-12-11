@@ -4,7 +4,7 @@ import StatsPanel from './components/StatsPanel';
 import PostFeed from './components/PostFeed';
 import './App.css';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';  // ✓ Fixed: API Gateway runs on port 8000
 
 function App() {
   const [emotions, setEmotions] = useState([]);

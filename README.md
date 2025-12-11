@@ -1,8 +1,10 @@
 # 🌍 Internet of Emotions
 
-> **Real-time Global Emotion Analysis Dashboard** - Monitor the collective emotional state of 196 countries through AI-powered analysis of Reddit posts.
+> **Real-time Global Emotion Analysis Dashboard** - Monitor the collective emotional state of 196 countries through AI-powered analysis of Reddit posts using production-ready microservices architecture.
 
 [![Production Ready](https://img.shields.io/badge/status-production%20ready-success)](.)
+[![Architecture](https://img.shields.io/badge/architecture-microservices-success)](.)
+[![Services](https://img.shields.io/badge/services-12-orange)](.)
 [![ML Models](https://img.shields.io/badge/ML%20models-5-blue)](.)
 [![Countries](https://img.shields.io/badge/countries-196-orange)](.)
 [![Python](https://img.shields.io/badge/python-3.9+-blue)](.)
@@ -13,6 +15,9 @@
   <img src="https://img.shields.io/badge/emotion-analysis-ff69b4" />
   <img src="https://img.shields.io/badge/real--time-streaming-success" />
   <img src="https://img.shields.io/badge/AI-ensemble-blueviolet" />
+  <img src="https://img.shields.io/badge/deployment-docker%20compose-blue" />
+  <img src="https://img.shields.io/badge/database-postgresql-blue" />
+  <img src="https://img.shields.io/badge/messaging-rabbitmq-orange" />
 </p>
 
 ---
@@ -21,15 +26,14 @@
 
 - [Overview](#-overview)
 - [Key Features](#-key-features)
-- [Architecture](#-architecture)
 - [Quick Start](#-quick-start)
-- [System Components](#-system-components)
-- [ML/AI Pipeline](#-mlai-pipeline)
+- [Architecture](#-architecture)
+- [Services](#-services)
+- [Testing](#-testing)
 - [API Reference](#-api-reference)
-- [Configuration](#-configuration)
 - [Documentation](#-documentation)
-- [Performance](#-performance)
 - [Deployment](#-deployment)
+- [Performance](#-performance)
 - [Troubleshooting](#-troubleshooting)
 - [Contributing](#-contributing)
 - [License](#-license)
@@ -38,141 +42,67 @@
 
 ## 🎯 Overview
 
-**Internet of Emotions** is a sophisticated real-time emotion analysis system that monitors and analyzes the collective emotional state of 196 countries by processing Reddit posts using advanced AI/ML techniques.
+**Internet of Emotions** is a sophisticated real-time emotion analysis system that monitors and analyzes the collective emotional state of 196 countries by processing Reddit posts using advanced AI/ML techniques in a scalable microservices architecture.
 
 ### What It Does
 
 - **Collects** posts from Reddit's news and discussion subreddits across all countries
-- **Analyzes** emotions using a 4-model ensemble (RoBERTa, VADER, TextBlob, Keywords)
-- **Classifies** posts as collective (country-level) or personal issues
-- **Detects** cross-country references using NER and keyword matching
-- **Aggregates** emotions at country level using 4 different algorithms
+- **Analyzes** emotions using advanced ML models (RoBERTa, BART, BERT NER)
+- **Extracts** content from URLs using intelligent article extraction
+- **Aggregates** emotions at country level with real-time updates
+- **Provides** full-text search and analytics across all posts
 - **Visualizes** results on an interactive world map with real-time updates
-- **Streams** live emotion data via Server-Sent Events (SSE)
 
-### Why It Matters
+### Architecture
 
-- **Global Sentiment Tracking**: Understand emotional trends across countries
-- **Real-time Insights**: Monitor how countries react to events
-- **Cross-country Analysis**: See how events in one country affect others
-- **Data-driven**: Based on actual social media discussions
-- **Scientifically Sound**: Uses proven ML models and ensemble methods
+**Production-ready microservices architecture** with 12 independent services communicating via RabbitMQ message queue.
+
+```
+Frontend (React + Nginx) → API Gateway → 11 Backend Services → PostgreSQL/Redis/Elasticsearch
+```
 
 ---
 
 ## ✨ Key Features
 
-### 🤖 **Advanced AI/ML Pipeline**
+### 🤖 **Microservices Architecture**
 
-- **Multi-Model Ensemble**: Combines 4 analysis methods for 70%+ accuracy
-  - **RoBERTa** (3.0x weight): j-hartmann/emotion-english-distilroberta-base - State-of-the-art transformer
-  - **VADER** (1.0x weight): Lexicon-based sentiment analysis
-  - **TextBlob** (0.8x weight): Pattern-based NLP
-  - **Keywords** (2.0x weight): Domain-specific emotion indicators
+- **12 Independent Services**: Each service has a single responsibility
+- **Event-Driven**: RabbitMQ message queue for async communication
+- **Horizontally Scalable**: Each service scales independently
+- **Fault-Tolerant**: Service isolation prevents cascade failures
+- **Production-Ready**: Docker Compose orchestration with health checks
 
-- **Country-Level Aggregation**: 4-algorithm consensus system (78-82% accuracy)
-  - Majority Vote
-  - Weighted by Confidence
-  - Intensity Weighted
-  - Median Intensity (robust to outliers)
+### 🧠 **Advanced ML/AI Pipeline**
 
-- **Cross-Country Detection**: 3 detection methods
-  - **NER (BERT)**: Named Entity Recognition for location entities
-  - **Keyword Matching**: 196 countries with 100+ aliases
-  - **Capital Cities**: 50+ capital city mappings
+- **RoBERTa**: Emotion classification (7 emotions: anger, fear, sadness, joy, disgust, surprise, neutral)
+- **BART**: Collective event detection vs personal posts
+- **BERT NER**: Named entity recognition for country detection
+- **VADER + TextBlob**: Sentiment analysis ensemble
+- **Lazy Loading**: Models load on-demand, unload when idle
 
 ### 🌐 **Global Coverage**
 
-- **196 Countries**: Complete world coverage with fair circular rotation
-- **Batch Processing**: 10 countries per batch, ~6-7 minutes per full cycle
-- **Multi-Country Posts**: Automatic duplication to all mentioned countries
-- **Smart Scheduling**: CircularRotation ensures equal treatment of all nations
+- **196 Countries**: Complete world coverage with geographic coordinates
+- **Smart Fetching**: Circular rotation ensures equal treatment
+- **30-Day Window**: Only recent, relevant posts (based on Reddit creation date)
+- **Cross-Country Detection**: Multi-country posts duplicated appropriately
 
-### 🎨 **Multimodal Analysis** (Optional)
+### ⚡ **Performance**
 
-- **CLIP**: Image emotion detection from OpenAI
-- **BLIP**: Image captioning from Salesforce
-- **Video Support**: Frame-by-frame analysis
+- **Distributed Caching**: Redis for 95%+ cache hit rate, <1ms responses
+- **Advanced Search**: Elasticsearch + FAISS for semantic search
+- **Async Processing**: Message queue-based workflow
+- **Real-time Updates**: Server-sent events (SSE) streaming
+- **Auto-Cleanup**: Daily removal of posts >30 days old
 
-### 🔄 **Real-time Updates**
+### 🎨 **Rich Features**
 
-- **Server-Sent Events (SSE)**: Live streaming of new posts
-- **Auto-refresh**: Frontend updates every 30 seconds
-- **Background Threads**: Continuous collection and analysis
-- **Smart Caching**: Multi-TTL cache (30-120s) for 95%+ hit rate
-
-### 💾 **Robust Data Management**
-
-- **SQLite Database**: Persistent storage with WAL mode
-- **Thread-Safe**: Per-thread connections via threading.local()
-- **Indexed Queries**: <10ms database lookups
-- **Auto-Cleanup**: Weekly removal of posts older than 28 days
-
-### ⚡ **Performance Optimizations**
-
-- **Lazy Loading**: ML models load on-demand (15s, ~4GB)
-- **Idle Unloading**: Automatic model unloading after 10 min (saves ~8x memory)
-- **Caching**: API responses cached with category-specific TTLs
-- **Duplicate Prevention**: 100% prevention with ID checking
-
-### 🎭 **Emotion Classification**
-
-7 distinct emotions detected:
-- 😊 **Joy** - Happiness, celebration, positivity
-- 😢 **Sadness** - Grief, disappointment, loss
-- 😠 **Anger** - Frustration, outrage, conflict
-- 😰 **Fear** - Anxiety, worry, concern
-- 😲 **Surprise** - Shock, unexpected events
-- 🤢 **Disgust** - Revulsion, moral outrage
-- 😐 **Neutral** - Objective, factual reporting
-
----
-
-## 🏗️ Architecture
-
-### System Overview
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     INTERNET OF EMOTIONS                    │
-│                    Layered Architecture                     │
-└─────────────────────────────────────────────────────────────┘
-
-┌───────────────┐   ┌───────────────┐   ┌───────────────┐
-│  Presentation │   │   Business    │   │  Data Access  │
-│     Layer     │──►│     Logic     │──►│     Layer     │
-│               │   │               │   │               │
-│ React + Leaflet│   │ Flask + ML    │   │ SQLite + ORM  │
-└───────────────┘   └───────────────┘   └───────────────┘
-                           │
-                           ▼
-                    ┌──────────────┐
-                    │   ML/AI      │
-                    │   Pipeline   │
-                    └──────────────┘
-```
-
-### Data Flow
-
-```
-Reddit API → Fetch Posts → Filter & Dedupe → Store Raw
-                                                  ↓
-Frontend ← API Response ← Aggregate ← Analyze ← Queue
-            (Cached)                   (ML)
-```
-
-### Core Components
-
-1. **Flask Backend** (`app.py`): Main application controller
-2. **PostDatabase** (`post_database.py`): Thread-safe SQLite interface
-3. **EmotionAnalyzer** (`emotion_analyzer.py`): Multi-model emotion detection
-4. **CollectiveAnalyzer** (`collective_analyzer.py`): BART-based classification
-5. **CrossCountryDetector** (`cross_country_detector.py`): NER + keyword matching
-6. **CountryEmotionAggregator** (`country_emotion_aggregator.py`): 4-algorithm consensus
-7. **SmartMLProcessor** (`smart_scheduler.py`): Lazy loading & lifecycle management
-8. **SmartCacheManager** (`smart_scheduler.py`): Multi-TTL caching
-9. **CircularRotation** (`app.py`): Fair country scheduling
-10. **MultimodalAnalyzer** (`multimodal_analyzer.py`): Image/video analysis
+- **Interactive Map**: Leaflet-powered world visualization with 195+ country markers
+- **Live Analytics**: Real-time statistics and emotion distribution
+- **Full-Text Search**: Elasticsearch-powered semantic search
+- **Country Details**: 4-algorithm consensus for country-level emotions
+- **Event Detection**: Automatic topic extraction and clustering
 
 ---
 
@@ -180,9 +110,10 @@ Frontend ← API Response ← Aggregate ← Analyze ← Queue
 
 ### Prerequisites
 
-- **Docker** & **Docker Compose** (recommended)
-- **OR** Python 3.9+ and Node.js 16+ (manual setup)
-- **Reddit API Credentials** (free from [reddit.com/prefs/apps](https://www.reddit.com/prefs/apps))
+- **Docker** 20.10+ with **Docker Compose** v2
+- **Reddit API Credentials** ([Get them here](https://www.reddit.com/prefs/apps))
+- **8GB RAM** minimum (16GB recommended for all services)
+- **20GB free disk space**
 
 ### 1. Get Reddit API Credentials
 
@@ -195,7 +126,14 @@ Frontend ← API Response ← Aggregate ← Analyze ← Queue
    - **Redirect URI**: http://localhost:8080
 4. Copy your `client_id` (under app name) and `client_secret`
 
-### 2. Configure Environment
+### 2. Clone Repository
+
+```bash
+git clone https://github.com/SonOfOgre666/InternetOfEmotions.git
+cd InternetOfEmotions
+```
+
+### 3. Configure Environment
 
 Create a `.env` file in the project root:
 
@@ -204,171 +142,321 @@ cat > .env << 'EOF'
 # Reddit API Credentials (REQUIRED)
 REDDIT_CLIENT_ID=your_client_id_here
 REDDIT_CLIENT_SECRET=your_client_secret_here
-REDDIT_USER_AGENT=InternetOfEmotions/1.0 by YourUsername
+REDDIT_USER_AGENT=InternetOfEmotions/2.0 by YourUsername
 
-# Optional Configuration
-MIN_POSTS_PER_COUNTRY=100
-MAX_POSTS_PER_COUNTRY=500
-UPDATE_INTERVAL_MINUTES=5
+# Database
+DB_NAME=emotion_db
+DB_USER=emotion_user
+DB_PASSWORD=change_me_secure_password
+
+# RabbitMQ
+RABBITMQ_USER=ioe_user
+RABBITMQ_PASSWORD=change_me_secure_password
+
+# Redis
+REDIS_PASSWORD=change_me_secure_password
+
+# Optional - Performance Tuning
+CLEANUP_INTERVAL_HOURS=24
+MAX_AGE_DAYS=30
+BATCH_SIZE=50
 EOF
 ```
 
-### 3. Launch with Docker (Recommended)
+### 4. Start All Services
 
 ```bash
-# Start all services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
+# Start all 17 containers (12 services + 5 infrastructure)
+docker compose -f docker-compose.microservices.yml up -d
 
 # Check status
-docker-compose ps
+docker compose -f docker-compose.microservices.yml ps
+
+# View logs
+docker compose -f docker-compose.microservices.yml logs -f
 ```
 
-### 4. Access the Dashboard
+### 5. Access Application
 
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:5000
-- **Health Check**: http://localhost:5000/api/health
+- **Frontend Dashboard**: http://localhost:3000
+- **API Gateway**: http://localhost:8000
+- **API Health Check**: http://localhost:8000/health
+- **RabbitMQ Management**: http://localhost:15672 (user: ioe_user)
 
-### 5. Monitor Progress
+### 6. Verify Services
 
 ```bash
-# Check collection progress
-curl http://localhost:5000/api/progress | jq
+# Test API Gateway
+curl http://localhost:8000/health
+
+# Check individual services
+curl http://localhost:5001/api/health  # Post Fetcher
+curl http://localhost:5003/api/health  # ML Analyzer
+curl http://localhost:5005/api/health  # Country Aggregation
 
 # View statistics
-curl http://localhost:5000/api/stats | jq
+curl http://localhost:8000/api/stats | jq
 
 # Get country details
-curl http://localhost:5000/api/country/USA | jq
+curl http://localhost:8000/api/country/usa | jq
 ```
 
-### Alternative: Manual Setup
-
-<details>
-<summary>Click to expand manual installation steps</summary>
-
-#### Backend Setup
+### 7. Monitor Progress
 
 ```bash
-cd backend
+# Watch all service logs
+docker compose -f docker-compose.microservices.yml logs -f
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Watch specific service
+docker compose -f docker-compose.microservices.yml logs -f ml_analyzer
 
-# Install dependencies
-pip install -r requirements.txt
-
-# Run backend
-python app.py
+# Check RabbitMQ message flow
+# Visit http://localhost:15672 and login with ioe_user
 ```
-
-#### Frontend Setup
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Start development server
-npm start
-```
-
-</details>
 
 ---
 
-## 🧩 System Components
+## 🏗️ Architecture
 
-### Backend Components (`backend/`)
+### System Overview
 
-| Component | File | Purpose | LOC |
-|-----------|------|---------|-----|
-| **Main App** | `app.py` | Flask application, API routes, threading | ~790 |
-| **Database** | `post_database.py` | SQLite interface, thread-safe connections | ~565 |
-| **Emotion Analyzer** | `emotion_analyzer.py` | Multi-model emotion detection | ~206 |
-| **Collective Analyzer** | `collective_analyzer.py` | BART classification | ~188 |
-| **Cross-Country Detector** | `cross_country_detector.py` | NER + keyword matching | ~537 |
-| **Country Aggregator** | `country_emotion_aggregator.py` | 4-algorithm consensus | ~311 |
-| **Multimodal Analyzer** | `multimodal_analyzer.py` | CLIP + BLIP for images | ~290 |
-| **Smart Scheduler** | `smart_scheduler.py` | ML lifecycle & caching | ~509 |
-| **Country Coordinates** | `country_coordinates.py` | Geographic data | ~200 |
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Frontend (React + Nginx)                  │
+│                        Port 3000                             │
+└────────────────────────────┬────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    API Gateway (Flask)                       │
+│              Port 8000 - Single Entry Point                  │
+└─────┬──────────┬──────────┬──────────┬──────────┬──────────┘
+      │          │          │          │          │
+      ▼          ▼          ▼          ▼          ▼
+┌──────────┐ ┌──────┐ ┌─────────┐ ┌────────┐ ┌────────┐
+│Post      │ │URL   │ │ML       │ │Country │ │Stats   │
+│Fetcher   │─│Extr  │─│Analyzer │─│Aggreg  │ │Service │
+│:5001     │ │:5002 │ │:5003    │ │:5005   │ │:5008   │
+└────┬─────┘ └──────┘ └─────────┘ └────────┘ └────────┘
+     │
+     ▼
+┌──────────┐ ┌──────────┐ ┌──────────┐
+│DB Cleanup│ │Cache     │ │Search    │
+│:5004     │ │:5006     │ │:5007     │
+└──────────┘ └──────────┘ └──────────┘
 
-**Total Backend**: ~3,600 lines of Python
+     ┌────────────┬──────────────┬─────────────┐
+     ▼            ▼              ▼             ▼
+┌──────────┐ ┌─────────┐ ┌──────────┐ ┌──────────┐
+│Scheduler │ │Collect  │ │Cross     │ │RabbitMQ  │
+│:5010     │ │Analyzer │ │Country   │ │:5672     │
+│          │ │:5011    │ │:5012     │ │          │
+└──────────┘ └─────────┘ └──────────┘ └──────────┘
+                                            ▲
+                                            │
+              ┌─────────────────────────────┼──────┐
+              ▼                             │      ▼
+        ┌──────────┐                  ┌─────────────┐
+        │PostgreSQL│                  │   Redis     │
+        │:5432     │                  │   :6379     │
+        └──────────┘                  └─────────────┘
+                                            │
+                                            ▼
+                                      ┌─────────────┐
+                                      │Elasticsearch│
+                                      │   :9200     │
+                                      └─────────────┘
+```
 
-### Frontend Components (`frontend/src/`)
+### Message Flow (RabbitMQ)
 
-| Component | File | Purpose |
-|-----------|------|---------|
-| **Main App** | `App.js` | React root, state management |
-| **Emotion Map** | `components/EmotionMap.js` | Leaflet map with markers |
-| **Stats Panel** | `components/StatsPanel.js` | Statistics display |
-| **Post Feed** | `components/PostFeed.js` | Live post stream |
+```
+Post Fetcher → [post.fetched] → URL Extractor → [url.extracted]
+                                                       ↓
+                                              ML Analyzer
+                                                       ↓
+                                             [post.analyzed]
+                                                       ↓
+                                           Country Aggregation
+                                                       ↓
+                                            [country.updated]
+```
 
-### Database Schema
+### Infrastructure Components
 
-**4 Tables**:
-
-1. **raw_posts**: Fetched but unanalyzed posts (14 fields)
-2. **posts**: Fully analyzed posts (17 fields)
-3. **country_stats**: Aggregated country statistics (6 fields)
-4. **clusters**: Topic/pattern clusters (5 fields)
-
-**5 Indexes** for optimal query performance
+| Component | Technology | Port | Purpose |
+|-----------|-----------|------|---------|
+| **Database** | PostgreSQL 15 | 5432 | Primary data store (8 tables) |
+| **Message Queue** | RabbitMQ 3.12 | 5672 | Event-driven communication |
+| **Cache** | Redis 7 | 6379 | Distributed caching |
+| **Search** | Elasticsearch 8.11 | 9200 | Full-text search |
+| **Reverse Proxy** | Nginx | 3000 | Frontend serving |
 
 ---
 
-## 🧠 ML/AI Pipeline
+## 🔧 Services
 
-### Emotion Detection Pipeline
+### Service 1: Post Fetcher (Port 5001)
+**Fetches posts from Reddit with smart filtering**
 
-```
-Input Text → RoBERTa → Weighted
-              VADER → Ensemble → Final Emotion
-            TextBlob → Scoring → + Confidence
-            Keywords ↗
-```
+**Features**:
+- ✅ Fetches posts ≤30 days old (Reddit creation timestamp)
+- ✅ Ignores image-only posts (no text content)
+- ✅ Keeps posts with text + images
+- ✅ Delegates URL-only posts to URL Extractor
+- ✅ Circular rotation for fair country coverage
+- ✅ Publishes `post.fetched` events
 
-### Model Details
+**Endpoints**:
+- `GET /api/health` - Health check
+- `GET /api/status` - Fetcher statistics
 
-| Model | Purpose | Size | Load Time | Weight |
-|-------|---------|------|-----------|--------|
-| **RoBERTa** | Emotion detection | ~1.5GB | ~5s | 3.0x |
-| **VADER** | Sentiment analysis | <1MB | <1s | 1.0x |
-| **TextBlob** | Pattern NLP | <1MB | <1s | 0.8x |
-| **Keywords** | Domain matching | <1MB | <1s | 2.0x |
-| **BART** | Collective classification | ~1.2GB | ~5s | N/A |
-| **BERT-NER** | Country detection | ~1.0GB | ~5s | N/A |
-| **CLIP** (optional) | Image emotion | ~400MB | ~3s | N/A |
-| **BLIP** (optional) | Image captioning | ~1.0GB | ~5s | N/A |
+---
 
-### Processing Flow
+### Service 2: URL Content Extractor (Port 5002)
+**Extracts article content from URLs**
 
-1. **Fetch**: Get posts from Reddit (50 per subreddit)
-2. **Filter**: Remove duplicates and posts >28 days old
-3. **Store**: Save to `raw_posts` table with `analyzed=FALSE`
-4. **Lazy Load**: Load ML models on first post (if not loaded)
-5. **Analyze**:
-   - Emotion detection (4-model ensemble)
-   - Collective vs personal classification
-   - Cross-country detection (3 methods)
-   - Optional multimodal analysis
-6. **Store Results**: Save to `posts` table
-7. **Duplicate**: If cross-country, copy to mentioned countries
-8. **Aggregate**: Apply 4 algorithms for country-level emotion
-9. **Cache**: Store results with TTL
-10. **Stream**: Send to frontend via SSE
+**Features**:
+- ✅ Listens to `post.fetched` events
+- ✅ Ignores social media URLs (Twitter, Facebook, Instagram, Reddit, etc.)
+- ✅ Extracts from blogs and news sites (newspaper3k)
+- ✅ Stores extracted content with original post
+- ✅ Publishes `url.extracted` events
 
-### Accuracy Metrics
+---
 
-- **Individual Posts**: 70% accuracy (RoBERTa baseline)
-- **Country-Level**: 78-82% accuracy (4-algorithm consensus)
-- **Cross-Country Detection**: 85%+ recall with NER
-- **Collective Classification**: 75% precision with BART
+### Service 3: ML Analysis Service (Port 5003)
+**Multi-model emotion detection and classification**
+
+**Features**:
+- ✅ 4-model emotion ensemble (RoBERTa, VADER, TextBlob, Keywords)
+- ✅ Collective vs personal classification (BART)
+- ✅ Cross-country detection (BERT NER + keywords)
+- ✅ Lazy loading for memory optimization
+- ✅ Batch processing (50 posts)
+- ✅ Publishes `post.analyzed` events
+
+**Models**:
+- **RoBERTa** (Weight: 3.0): j-hartmann/emotion-english-distilroberta-base
+- **VADER** (Weight: 1.0): Sentiment analysis
+- **TextBlob** (Weight: 0.8): Pattern NLP
+- **Keywords** (Weight: 2.0): Domain-specific emotion keywords
+- **BART**: facebook/bart-large-mnli (collective classification)
+- **BERT-NER**: dslim/bert-base-NER (country detection)
+
+---
+
+### Service 4: DB Cleanup Service (Port 5004)
+**Automatic removal of old posts**
+
+**Features**:
+- ✅ Scheduled cleanup every 24 hours
+- ✅ Removes posts where `reddit_created_at > 30 days`
+- ✅ Cascading deletes (url_content, analyzed_posts)
+- ✅ Cleanup reports and metrics
+
+---
+
+### Service 5: Country Aggregation (Port 5005)
+**Country-level emotion aggregation**
+
+**Features**:
+- ✅ Listens to `post.analyzed` events
+- ✅ 4-algorithm consensus (majority, weighted, intensity, median)
+- ✅ Confidence scoring
+- ✅ Country coordinates for 195+ countries
+- ✅ Publishes `country.updated` events
+
+**Endpoints**:
+- `GET /api/countries` - All countries with emotions
+- `GET /api/country/<name>` - Detailed country analysis
+
+---
+
+### Service 6: Cache Service (Port 5006)
+**Redis-based distributed caching**
+
+**Features**:
+- ✅ Multi-TTL caching (30s-120s)
+- ✅ Cache invalidation on updates
+- ✅ Pub/sub for invalidation events
+- ✅ 95%+ cache hit rate
+
+---
+
+### Service 7: Search Service (Port 5007)
+**Advanced full-text search**
+
+**Features**:
+- ✅ Elasticsearch integration
+- ✅ FAISS vector similarity search
+- ✅ Real-time indexing
+- ✅ Faceted search (by country, emotion, date)
+
+**Endpoints**:
+- `GET /api/search?q=<query>` - Search posts
+
+---
+
+### Service 8: Stats Service (Port 5008)
+**Global statistics aggregation**
+
+**Features**:
+- ✅ Real-time global statistics
+- ✅ Emotion distribution
+- ✅ Top countries by post count
+- ✅ Trend analysis
+
+**Endpoints**:
+- `GET /api/stats` - Global statistics
+
+---
+
+### Service 9: API Gateway (Port 8000)
+**Single entry point for all requests**
+
+**Features**:
+- ✅ Routes to all backend services
+- ✅ Request logging
+- ✅ Health check aggregation
+- ✅ CORS handling
+
+**Endpoints**:
+- `GET /health` - Gateway health
+- `GET /api/*` - Proxies to services
+
+---
+
+### Service 10: Smart Scheduler (Port 5010)
+**Intelligent country scheduling**
+
+**Features**:
+- ✅ Priority-based scheduling
+- ✅ Circular rotation fallback
+- ✅ Adaptive batching
+- ✅ Load balancing
+
+---
+
+### Service 11: Collective Analyzer (Port 5011)
+**Advanced collective event detection**
+
+**Features**:
+- ✅ BART-based classification
+- ✅ Topic extraction
+- ✅ Event clustering
+- ✅ Sentiment intensity analysis
+
+---
+
+### Service 12: Cross-Country Detector (Port 5012)
+**Multi-country post detection**
+
+**Features**:
+- ✅ BERT NER for country entities
+- ✅ Keyword matching (196 countries)
+- ✅ Confidence scoring
+- ✅ Post duplication for multiple countries
 
 ---
 
@@ -376,58 +464,81 @@ Input Text → RoBERTa → Weighted
 
 ### Base URL
 ```
-http://localhost:5000/api
+http://localhost:8000/api
 ```
 
-### Endpoints
+### Core Endpoints
 
-#### **GET /api/health**
-System health check
+#### **GET /health**
+Gateway and service health check
 
 **Response:**
 ```json
 {
   "status": "healthy",
-  "timestamp": "2025-11-25T12:00:00Z",
-  "database": "connected",
-  "models_loaded": true
+  "timestamp": "2025-12-11T12:00:00Z",
+  "services": {
+    "post_fetcher": "healthy",
+    "ml_analyzer": "healthy",
+    "database": "connected"
+  }
 }
 ```
 
 #### **GET /api/emotions**
-Get all emotion posts (last 1000, collective only)
+Get all emotion posts for map visualization
 
 **Response:**
 ```json
 {
   "emotions": [
     {
-      "id": "abc123",
       "country": "USA",
       "emotion": "anger",
       "confidence": 0.85,
-      "coords": [37.0902, -95.7129],
-      "text": "Post text...",
-      "is_collective": true,
-      "timestamp": "2025-11-25T12:00:00Z"
+      "lat": 37.0902,
+      "lng": -95.7129,
+      "total_posts": 847
     }
   ],
-  "count": 1000,
-  "countries_ready": 145
+  "demo_mode": false,
+  "count": 145
 }
 ```
 
-#### **GET /api/country/{name}**
-Get detailed country analysis
-
-**Parameters:**
-- `name`: Country name (e.g., "USA", "UK", "France")
+#### **GET /api/stats**
+Get global statistics
 
 **Response:**
 ```json
 {
-  "country": "USA",
-  "total_posts": 847,
+  "total": 45000,
+  "by_emotion": {
+    "anger": 12500,
+    "fear": 9800,
+    "sadness": 8200,
+    "neutral": 6500,
+    "joy": 4500,
+    "disgust": 2000,
+    "surprise": 1500
+  },
+  "by_country": {
+    "USA": 3500,
+    "UK": 2800,
+    "India": 2500
+  }
+}
+```
+
+#### **GET /api/country/<name>**
+Get detailed country analysis (case-insensitive)
+
+**Parameters:**
+- `name`: Country name (e.g., "USA", "uk", "France")
+
+**Response:**
+```json
+{
   "country_emotion": {
     "dominant_emotion": "anger",
     "confidence": 0.78,
@@ -437,14 +548,6 @@ Get detailed country analysis
       "weighted": "anger",
       "intensity": "fear",
       "median": "anger"
-    },
-    "details": {
-      "algorithm_consensus": {
-        "majority_vote": "anger (35%)",
-        "weighted_vote": "anger (conf: 0.82)",
-        "intensity_vote": "fear (weighted: 0.88)",
-        "median_intensity": "anger (median: 0.75)"
-      }
     }
   },
   "emotion_distribution": {
@@ -456,74 +559,14 @@ Get detailed country analysis
     "disgust": 30,
     "surprise": 15
   },
+  "total_posts": 847,
   "top_events": [
     {
       "topic": "election results",
       "count": 47,
-      "avg_engagement": 2300,
-      "top_post": {
-        "text": "Full post text (no truncation)...",
-        "emotion": "anger",
-        "score": 3500,
-        "url": "https://reddit.com/...",
-        "source": "r/news"
-      },
       "sample_posts": [...]
     }
   ]
-}
-```
-
-#### **GET /api/stats**
-Get global statistics
-
-**Response:**
-```json
-{
-  "total_posts": 45000,
-  "countries_ready": 145,
-  "emotion_breakdown": {
-    "anger": 12500,
-    "fear": 9800,
-    "sadness": 8200,
-    "neutral": 6500,
-    "joy": 4500,
-    "disgust": 2000,
-    "surprise": 1500
-  },
-  "top_countries": [
-    {"country": "USA", "count": 3500},
-    {"country": "UK", "count": 2800},
-    {"country": "India", "count": 2500}
-  ]
-}
-```
-
-#### **GET /api/countries**
-Get all countries with post counts
-
-**Response:**
-```json
-{
-  "countries": [
-    {"name": "USA", "count": 847, "emotion": "anger"},
-    {"name": "UK", "count": 652, "emotion": "fear"}
-  ],
-  "total": 196
-}
-```
-
-#### **GET /api/progress**
-Get collection progress
-
-**Response:**
-```json
-{
-  "ready_countries": 145,
-  "total_countries": 196,
-  "progress_percent": 73.98,
-  "current_cycle": 3,
-  "total_posts": 45000
 }
 ```
 
@@ -532,85 +575,182 @@ Server-Sent Events stream for real-time updates
 
 **Response:** (SSE stream)
 ```
-data: {"id":"abc123","country":"USA","emotion":"anger",...}
+data: {"country":"USA","emotion":"anger","text":"..."}
 
-data: {"id":"def456","country":"UK","emotion":"fear",...}
+data: {"country":"UK","emotion":"fear","text":"..."}
 ```
 
----
+#### **GET /api/search?q=<query>**
+Full-text search across all posts
 
-## ⚙️ Configuration
+**Parameters:**
+- `q`: Search query
 
-### Environment Variables (`.env`)
-
-```bash
-# Required
-REDDIT_CLIENT_ID=your_id
-REDDIT_CLIENT_SECRET=your_secret
-REDDIT_USER_AGENT=InternetOfEmotions/1.0
-
-# Optional - Backend Configuration
-MIN_POSTS_PER_COUNTRY=100        # Display threshold
-MAX_POSTS_PER_COUNTRY=500        # Storage limit per country
-UPDATE_INTERVAL_MINUTES=5        # Collection frequency
-CLEANUP_INTERVAL_HOURS=168       # Weekly cleanup (7 days)
-MAX_AGE_DAYS=28                  # Post age limit
-
-# Optional - ML Configuration
-ENABLE_MULTIMODAL=false          # CLIP + BLIP (requires GPU)
-IDLE_MODEL_TIMEOUT=600           # 10 minutes
-BATCH_SIZE=50                    # Posts per ML batch
-
-# Optional - Cache Configuration
-CACHE_TTL_EMOTIONS=30            # Seconds
-CACHE_TTL_COUNTRY_DETAILS=120    # Seconds
-CACHE_TTL_STATS=30               # Seconds
-
-# Optional - Frontend
-REACT_APP_API_URL=http://localhost:5000
-```
-
-### App Configuration (`backend/app.py`)
-
-```python
-# Circular Rotation
-countries_per_batch = 10          # Countries per batch
-sleep_between_batches = 2         # Seconds
-
-# Data Collection
-MAX_POSTS_PER_SUBREDDIT = 50      # Posts per fetch
-PRIMARY_SUBREDDITS = ['news', 'worldnews', 'UpliftingNews']
-
-# Topic Extraction
-TOPIC_LIMIT = 5                   # Top topics per country
-TOPIC_PATTERNS = 15               # Regex patterns
-
-# Model Weights
-EMOTION_WEIGHTS = {
-    'roberta': 3.0,               # Most accurate
-    'keywords': 2.0,
-    'vader': 1.0,
-    'textblob': 0.8
+**Response:**
+```json
+{
+  "results": [
+    {
+      "post_id": "abc123",
+      "text": "Matching post text...",
+      "country": "USA",
+      "emotion": "anger",
+      "score": 0.95
+    }
+  ],
+  "total": 42
 }
 ```
 
 ---
 
+## 🧪 Testing
+
+### Unit Tests
+
+All 12 microservices have comprehensive unit test coverage with **440+ test cases**.
+
+#### Run All Tests
+
+```bash
+# Run all tests
+./run_tests.sh
+
+# Run with verbose output
+./run_tests.sh -v
+
+# Generate coverage report
+./run_tests.sh -h
+```
+
+#### Run Tests for Specific Service
+
+```bash
+# Test individual service
+cd backend/services/ml_analyzer
+pytest test_app.py -v
+
+# Test with coverage
+pytest test_app.py --cov=app --cov-report=html
+```
+
+#### Test Coverage
+
+| Service | Test Cases | Coverage |
+|---------|-----------|----------|
+| API Gateway | 30+ | Core routing, error handling |
+| ML Analyzer | 70+ | Emotion detection, models |
+| Post Fetcher | 50+ | Reddit API, filtering |
+| Country Aggregation | 55+ | 4 algorithms, consensus |
+| Collective Analyzer | 40+ | Classification, patterns |
+| Cross-Country Detector | 45+ | NER, keywords |
+| Cache Service | 20+ | Redis operations |
+| Search Service | 15+ | Search queries |
+| Stats Service | 20+ | Aggregation, streaming |
+| Scheduler | 35+ | Prioritization, timing |
+| URL Extractor | 35+ | Content extraction |
+| DB Cleanup | 25+ | Cleanup logic |
+
+**Documentation:**
+- [backend/TESTING.md](backend/TESTING.md) - Complete testing guide
+- [TEST_IMPLEMENTATION_SUMMARY.md](TEST_IMPLEMENTATION_SUMMARY.md) - Test implementation details
+
+---
+
 ## 📚 Documentation
 
-### Quick Reference
+### Architecture & Design
+- **[MICROSERVICES_ARCHITECTURE.md](MICROSERVICES_ARCHITECTURE.md)** - Complete architecture design
+- **[MICROSERVICES_README.md](MICROSERVICES_README.md)** - Detailed microservices guide
+- **[PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)** - Current project structure
+- **[TEST_IMPLEMENTATION_SUMMARY.md](TEST_IMPLEMENTATION_SUMMARY.md)** - Testing implementation
 
-- **[QUICK_START.md](QUICK_START.md)** - 5-minute setup guide
+### Getting Started
+- **[QUICK_START_MICROSERVICES.md](QUICK_START_MICROSERVICES.md)** - 5-minute quick start
+- **[backend/DEPLOYMENT.md](backend/DEPLOYMENT.md)** - Production deployment guide
+- **[backend/TESTING.md](backend/TESTING.md)** - Testing guide
 
 ### UML Diagrams
+- **[docs/CLASS_DIAGRAM_MERMAID.md](docs/CLASS_DIAGRAM_MERMAID.md)** - Class structure
+- **[docs/SEQUENCE_DIAGRAM_MERMAID.md](docs/SEQUENCE_DIAGRAM_MERMAID.md)** - Data flow sequences
+- **[docs/USE_CASE_DIAGRAMS_MERMAID.md](docs/USE_CASE_DIAGRAMS_MERMAID.md)** - Use cases with actors
 
-- **[SEQUENCE_DIAGRAM.md](Sequence_Diagrams.md)** - Complete data flow sequences
-- **[CLASS_DIAGRAM.md](Class_Diagrams.md)** - Object-oriented architecture
-- **[USE_CASE_DIAGRAMS.md](UseCase_Diagrams.md)** - 25 use cases with actors
+### Legacy
+- **[archive/old_monolith/](archive/old_monolith/)** - Archived v1.0 monolithic backend
 
-### Optimization Guides
+---
 
-- **[SMART_OPTIMIZATION_GUIDE.md](SMART_OPTIMIZATION_GUIDE.md)** - Performance optimizations
+## 🐳 Deployment
+
+### Docker Compose (Production)
+
+The recommended deployment method using `docker-compose.microservices.yml`:
+
+```bash
+# Start all services
+docker compose -f docker-compose.microservices.yml up -d
+
+# View logs (all services)
+docker compose -f docker-compose.microservices.yml logs -f
+
+# View logs (specific service)
+docker compose -f docker-compose.microservices.yml logs -f ml_analyzer
+
+# Check status
+docker compose -f docker-compose.microservices.yml ps
+
+# Restart services
+docker compose -f docker-compose.microservices.yml restart
+
+# Stop services
+docker compose -f docker-compose.microservices.yml down
+
+# Stop and remove volumes
+docker compose -f docker-compose.microservices.yml down -v
+
+# Rebuild after changes
+docker compose -f docker-compose.microservices.yml up -d --build
+```
+
+### Service Scaling
+
+Scale individual services based on load:
+
+```bash
+# Scale ML analyzer to 3 instances
+docker compose -f docker-compose.microservices.yml up -d --scale ml_analyzer=3
+
+# Scale post fetcher to 2 instances
+docker compose -f docker-compose.microservices.yml up -d --scale post_fetcher=2
+```
+
+### Health Monitoring
+
+```bash
+# API Gateway health
+curl http://localhost:8000/health
+
+# Individual service health
+curl http://localhost:5001/api/health  # Post Fetcher
+curl http://localhost:5003/api/health  # ML Analyzer
+curl http://localhost:5005/api/health  # Country Aggregation
+
+# RabbitMQ Management UI
+open http://localhost:15672
+
+# Check database
+docker compose -f docker-compose.microservices.yml exec db psql -U emotion_user -d emotion_db -c "SELECT COUNT(*) FROM raw_posts;"
+```
+
+### Production Considerations
+
+1. **Environment Variables**: Use Docker secrets or vault for credentials
+2. **Volume Mounts**: Persist database with named volumes
+3. **Reverse Proxy**: Use Nginx/Traefik for SSL termination and load balancing
+4. **Monitoring**: Set up Prometheus + Grafana
+5. **Resource Limits**: Configure memory/CPU limits in docker-compose
+6. **Backup**: Regular PostgreSQL backups with pg_dump
+7. **Log Aggregation**: Use ELK stack or similar for centralized logging
 
 ---
 
@@ -620,130 +760,46 @@ EMOTION_WEIGHTS = {
 
 | Metric | Value | Details |
 |--------|-------|---------|
-| **Memory (idle)** | 500 MB | Models unloaded |
-| **Memory (active)** | ~4 GB | All models loaded |
-| **Memory Savings** | **8x** | Via lazy loading |
-| **Model Load Time** | 15 seconds | All models |
-| **Unload Trigger** | 10 minutes | Idle timeout |
-| **Cycle Time** | 6-7 minutes | All 196 countries |
-| **Collection Rate** | 20-30 posts/min | Per country |
-| **Processing Time** | 50-100 ms/post | Includes NER |
-| **API Response (cached)** | <1 ms | **2000x faster** |
-| **API Response (uncached)** | 50-200 ms | Database query |
+| **Throughput** | 20-30 posts/min | Per country |
+| **Total Containers** | 17 | 12 services + 5 infrastructure |
+| **Memory (all services)** | ~6-8 GB | With models loaded |
 | **Cache Hit Rate** | 95%+ | After warmup |
+| **API Response (cached)** | <1 ms | Redis cache |
+| **API Response (uncached)** | 50-200 ms | Database query |
 | **Database Query** | <10 ms | With indexes |
-| **Duplicate Prevention** | 100% | ID checking |
+| **ML Processing** | 50-100 ms/post | Includes NER |
+| **Model Load Time** | 15 seconds | All models |
 
-### Throughput
+### Database Schema
 
-- **Posts/Hour**: 1,200-1,800 (across all countries)
-- **Countries/Cycle**: 196 (10 per batch)
-- **Cycles/Hour**: 9-10 complete rotations
-- **Max Capacity**: 97,500 posts (500 per country × 195)
+**8 Tables** in PostgreSQL:
 
-### Accuracy
+1. **raw_posts**: Fetched posts (12 fields, UNIQUE on post_id)
+2. **url_content**: Extracted URL content (5 fields, UNIQUE on post_id)
+3. **analyzed_posts**: ML analysis results (15 fields, UNIQUE on post_id)
+4. **country_emotions**: Aggregated country data (8 fields)
+5. **cleanup_logs**: Cleanup operation history (5 fields)
+6. **global_statistics**: System-wide stats (4 fields)
+7. **collective_events**: Detected events (7 fields)
+8. **cross_country_mentions**: Multi-country posts (4 fields)
 
-- **Individual Post Emotion**: 70% (RoBERTa baseline)
-- **Country-Level Emotion**: 78-82% (4-algorithm consensus)
-- **Collective Classification**: 75% precision
-- **Cross-Country Detection**: 85%+ recall
+### Accuracy Metrics
+
+- **Individual Post Emotion**: 70% accuracy (RoBERTa baseline)
+- **Country-Level Emotion**: 78-82% accuracy (4-algorithm consensus)
+- **Cross-Country Detection**: 85%+ recall with NER
+- **Collective Classification**: 75% precision with BART
 
 ### Optimization Highlights
 
-✅ **Lazy Loading**: Models load on-demand, save 8x memory
-✅ **Smart Caching**: 95%+ hit rate, <1ms responses
-✅ **Circular Rotation**: Fair coverage, no priority bias
-✅ **Batch Processing**: 50 posts at once, efficient
-✅ **Duplicate Prevention**: 100% accuracy with ID checks
-✅ **Age Filtering**: Primary filter at fetch (≤28 days)
-✅ **Thread Safety**: Per-thread connections, SQLite WAL
-✅ **Auto Cleanup**: Weekly maintenance, no manual intervention
-
----
-
-## 🐳 Deployment
-
-### Docker Compose (Production)
-
-The recommended deployment method using `docker-compose.yml`:
-
-```yaml
-version: '3.8'
-
-services:
-  backend:
-    build: ./backend
-    ports:
-      - "5000:5000"
-    environment:
-      - REDDIT_CLIENT_ID=${REDDIT_CLIENT_ID}
-      - REDDIT_CLIENT_SECRET=${REDDIT_CLIENT_SECRET}
-      - REDDIT_USER_AGENT=${REDDIT_USER_AGENT}
-    volumes:
-      - ./backend/posts.db:/app/posts.db
-    restart: unless-stopped
-
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
-    restart: unless-stopped
-```
-
-### Commands
-
-```bash
-# Start services
-docker-compose up -d
-
-# View logs (all services)
-docker-compose logs -f
-
-# View logs (specific service)
-docker-compose logs -f backend
-
-# Check status
-docker-compose ps
-
-# Restart services
-docker-compose restart
-
-# Stop services
-docker-compose down
-
-# Stop and remove volumes
-docker-compose down -v
-
-# Rebuild after changes
-docker-compose up -d --build
-```
-
-### Health Monitoring
-
-```bash
-# Backend health
-curl http://localhost:5000/api/health
-
-# Check progress
-curl http://localhost:5000/api/progress | jq
-
-# View statistics
-curl http://localhost:5000/api/stats | jq
-
-# Test SSE stream
-curl -N http://localhost:5000/api/posts/stream
-```
-
-### Production Considerations
-
-1. **Environment Variables**: Use Docker secrets for credentials
-2. **Volume Mounts**: Persist database with named volumes
-3. **Reverse Proxy**: Use Nginx for SSL termination
-4. **Monitoring**: Set up health checks and logging
-5. **Resource Limits**: Configure memory/CPU limits
-6. **Backup**: Regular database backups
+✅ **Lazy Loading**: ML models load on-demand, save memory  
+✅ **Smart Caching**: 95%+ hit rate, <1ms responses  
+✅ **Batch Processing**: 50 posts at once, efficient  
+✅ **UNIQUE Constraints**: Prevent duplicate database inserts  
+✅ **UTC Timestamps**: Consistent time filtering  
+✅ **Case-Insensitive Queries**: LOWER() for country matching  
+✅ **Auto Cleanup**: Daily removal of posts >30 days  
+✅ **Message Queue**: Async processing, decoupled services  
 
 ---
 
@@ -751,24 +807,24 @@ curl -N http://localhost:5000/api/posts/stream
 
 ### Common Issues
 
-#### Issue: Backend won't start
+#### Issue: Services won't start
 
 **Symptoms**: Container exits immediately or shows errors
 
 **Solutions**:
 ```bash
 # Check logs
-docker-compose logs backend
+docker compose -f docker-compose.microservices.yml logs <service_name>
 
 # Common causes:
 # 1. Missing Reddit credentials
 cat .env  # Verify REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET
 
-# 2. Port already in use
-lsof -i :5000  # Check if port 5000 is occupied
+# 2. Port conflicts
+lsof -i :8000  # Check if ports are occupied
 
-# 3. Database locked
-rm backend/posts.db  # Remove and let it recreate
+# 3. Database not ready
+docker compose -f docker-compose.microservices.yml restart db
 ```
 
 #### Issue: No data appearing on map
@@ -777,17 +833,17 @@ rm backend/posts.db  # Remove and let it recreate
 
 **Solutions**:
 ```bash
-# Check collection progress
-curl http://localhost:5000/api/progress | jq
+# Check statistics
+curl http://localhost:8000/api/stats | jq
 
-# Verify data collection
-curl http://localhost:5000/api/stats | jq '.total_posts'
+# Verify post fetcher is working
+docker compose -f docker-compose.microservices.yml logs post_fetcher
 
-# Check backend logs for errors
-docker-compose logs -f backend | grep ERROR
+# Check database
+docker compose -f docker-compose.microservices.yml exec db psql -U emotion_user -d emotion_db -c "SELECT COUNT(*) FROM raw_posts;"
 
 # Wait time: 5-10 minutes for first batch
-# Minimum: 100 posts per country to display
+# Data collection is automatic via post_fetcher service
 ```
 
 #### Issue: High memory usage
@@ -799,65 +855,66 @@ docker-compose logs -f backend | grep ERROR
 # Check memory usage
 docker stats
 
-# Models should unload after 10 min idle
-# Current usage: ~500MB idle, ~4GB active
+# ML models load on-demand
+# Expected: ~6-8GB total with all services
 
-# Force model unload (restart)
-docker-compose restart backend
+# Reduce services if needed
+docker compose -f docker-compose.microservices.yml stop ml_analyzer
 ```
 
-#### Issue: Frontend can't connect to backend
+#### Issue: RabbitMQ message backlog
 
-**Symptoms**: "Backend not available" message
+**Symptoms**: Messages piling up in queues
 
 **Solutions**:
 ```bash
-# Verify backend is running
-curl http://localhost:5000/api/health
+# Check RabbitMQ management UI
+open http://localhost:15672
 
-# Check CORS configuration
-# Edit backend/app.py if needed
+# Scale consumers
+docker compose -f docker-compose.microservices.yml up -d --scale ml_analyzer=2
 
-# Verify API URL in frontend
-cat frontend/.env  # Should have REACT_APP_API_URL
-
-# Restart both services
-docker-compose restart
+# Check consumer logs
+docker compose -f docker-compose.microservices.yml logs ml_analyzer
 ```
 
-#### Issue: Reddit API rate limiting
+#### Issue: Database connection errors
 
-**Symptoms**: "Too many requests" errors in logs
+**Symptoms**: "Connection refused" or "Authentication failed"
 
 **Solutions**:
 ```bash
-# Reddit API limits: 60 requests/minute
-# Current implementation respects limits
+# Verify database is running
+docker compose -f docker-compose.microservices.yml ps db
 
-# Increase delay between batches
-# Edit backend/app.py:
-# sleep_between_batches = 3  # Increase from 2
+# Check credentials in .env
+cat .env | grep DB_
 
-# Check Reddit API status
-# https://www.redditstatus.com/
+# Restart database
+docker compose -f docker-compose.microservices.yml restart db
+
+# Check database logs
+docker compose -f docker-compose.microservices.yml logs db
 ```
 
 ### Debug Mode
 
 Enable detailed logging:
 
-```python
-# Edit backend/app.py
-import logging
-logging.basicConfig(level=logging.DEBUG)
+```bash
+# Edit docker-compose.microservices.yml
+# Add to service environment:
+LOG_LEVEL=DEBUG
+
+# Restart service
+docker compose -f docker-compose.microservices.yml restart <service_name>
 ```
 
 ### Getting Help
 
-1. **Check Logs**: `docker-compose logs -f`
-2. **Review Documentation**: See [docs](#-documentation)
-3. **GitHub Issues**: [Report bugs](https://github.com/yourusername/internet-of-emotions/issues)
-4. **Community**: Stack Overflow with tag `internet-of-emotions`
+1. **Check Logs**: `docker compose -f docker-compose.microservices.yml logs -f`
+2. **Review Documentation**: See [Documentation](#-documentation)
+3. **GitHub Issues**: [Report bugs](https://github.com/SonOfOgre666/InternetOfEmotions/issues)
 
 ---
 
@@ -884,22 +941,14 @@ Contributions are welcome! Here's how you can help:
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/internet-of-emotions.git
-cd internet-of-emotions
+git clone https://github.com/SonOfOgre666/InternetOfEmotions.git
+cd InternetOfEmotions
 
-# Install backend dependencies
-cd backend
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+# Start development environment
+docker compose -f docker-compose.microservices.yml up -d
 
-# Install frontend dependencies
-cd ../frontend
-npm install
-
-# Run tests (when available)
-pytest backend/tests/
-npm test --prefix frontend/
+# Watch logs
+docker compose -f docker-compose.microservices.yml logs -f
 ```
 
 ### Code Style
@@ -913,16 +962,6 @@ npm test --prefix frontend/
 ## 📄 License
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
-```
-MIT License
-
-Copyright (c) 2025 Internet of Emotions
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction...
-```
 
 ---
 
@@ -943,21 +982,24 @@ in the Software without restriction...
 - **Leaflet**: Map visualization
 - **Hugging Face Transformers**: ML model library
 - **PRAW**: Reddit API wrapper
-- **SQLite**: Database engine
+- **PostgreSQL**: Production database
+- **RabbitMQ**: Message queue
+- **Redis**: Caching layer
+- **Elasticsearch**: Search engine
 
 ### Data Sources
 
 - **Reddit**: Social media data via official API
-- **Country Coordinates**: Geographic data
+- **Country Coordinates**: Geographic data for 195+ countries
 
 ---
 
 ## 📈 Project Stats
 
-[![Lines of Code](https://img.shields.io/badge/lines%20of%20code-5000%2B-blue)](./)
-[![Backend LOC](https://img.shields.io/badge/backend-3600%20lines-orange)](./)
+[![Services](https://img.shields.io/badge/microservices-12-success)](./)
+[![Containers](https://img.shields.io/badge/containers-17-blue)](./)
 [![Countries](https://img.shields.io/badge/countries%20supported-196-green)](./)
-[![ML Models](https://img.shields.io/badge/ML%20models-5-blueviolet)](./)
+[![ML Models](https://img.shields.io/badge/ML%20models-6-blueviolet)](./)
 [![Accuracy](https://img.shields.io/badge/accuracy-70--82%25-success)](./)
 
 ---
@@ -966,31 +1008,30 @@ in the Software without restriction...
 
 | Resource | Link |
 |----------|------|
-| **Quick Start** | [QUICK_START.md](QUICK_START.md) |
-| **API Docs** | [API Reference](#-api-reference) |
-| **Architecture** | [SEQUENCE_DIAGRAM_MERMAID.md](SEQUENCE_DIAGRAM_MERMAID.md) |
-| **Class Diagrams** | [CLASS_DIAGRAM_MERMAID.md](CLASS_DIAGRAM_MERMAID.md) |
-| **Use Cases** | [USE_CASE_DIAGRAMS_MERMAID.md](USE_CASE_DIAGRAMS_MERMAID.md) |
-| **ML Details** | [ML_EMOTION_MODEL.md](ML_EMOTION_MODEL.md) |
+| **Quick Start** | [QUICK_START_MICROSERVICES.md](QUICK_START_MICROSERVICES.md) |
+| **Architecture** | [MICROSERVICES_ARCHITECTURE.md](MICROSERVICES_ARCHITECTURE.md) |
+| **API Reference** | [API Reference](#-api-reference) |
+| **Implementation Status** | [IMPLEMENTATION_COMPLETE.md](IMPLEMENTATION_COMPLETE.md) |
+| **Project Structure** | [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) |
 
 ---
 
-## 🎬 Getting Started
+## 🎬 Getting Started Path
 
 **New to the project?** Follow this path:
 
 1. 📖 Read this README (you are here!)
 2. 🚀 Follow [Quick Start](#-quick-start) guide
-3. 🗺️ Explore the dashboard at http://localhost:3000
-4. 📊 Check out [VISUAL_SUMMARY.txt](VISUAL_SUMMARY.txt) for architecture overview
-5. 🧠 Learn about ML pipeline in [ML_EMOTION_MODEL.md](ML_EMOTION_MODEL.md)
-6. 🔍 Deep dive with [DEEP_DIVE_WORKFLOW.md](DEEP_DIVE_WORKFLOW.md)
+3. 🏗️ Understand [Architecture](#-architecture)
+4. 🗺️ Explore the dashboard at http://localhost:3000
+5. 📊 Check [API Reference](#-api-reference)
+6. 🔍 Deep dive with [MICROSERVICES_ARCHITECTURE.md](MICROSERVICES_ARCHITECTURE.md)
 
 ---
 
 <p align="center">
   <b>Built with ❤️ for understanding global emotions</b><br/>
-  <i>Monitoring 196 countries • Analyzing millions of posts • Powered by AI</i>
+  <i>Monitoring 196 countries • Processing thousands of posts • Powered by AI</i>
 </p>
 
 <p align="center">
@@ -1001,6 +1042,6 @@ in the Software without restriction...
 
 ---
 
-**Last Updated**: 2025-11-25
-**Version**: 2.0.0
+**Last Updated**: December 11, 2025  
+**Version**: 2.0.0 (Microservices)  
 **Status**: ✅ Production Ready
