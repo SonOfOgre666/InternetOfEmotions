@@ -1,0 +1,37 @@
+Flask
+flask-cors
+requests
+tenacity
+pybreaker
+prometheus-client
+sentry-sdk[flask]
+APScheduler
+beautifulsoup4
+lxml
+praw
+python-dotenv
+scikit-learn
+transformers
+numpy
+vaderSentiment
+# Translation and language detection
+deep-translator
+langdetect
+# Testing framework
+pytest
+pytest-cov
+pytest-mock
+pytest-asyncio
+
+# Mocking
+responses
+
+# Code quality
+pytest-flake8
+pytest-pylint
+
+# Performance testing
+pytest-benchmark
+
+# sentence-transformers - Install after torch CPU-only version
+sentence-transformers
