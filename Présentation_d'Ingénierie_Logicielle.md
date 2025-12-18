@@ -1077,69 +1077,37 @@ Maintenant que vous comprenez notre stack, voyons comment nous avons conçu chaq
 **Implémentation - Rotation Circulaire**:
 ```python
 class CircularRotation:
-    """Manages circular rotation through ALL countries"""
-    def __init__(self, countries=None):
-        if countries is None:
-            from config import ALL_COUNTRIES as _all_countries
-            countries = _all_countries
+    def __init__(self, countries):
         self.countries = countries
+        self.countries_per_batch = 30  # 30 pays par lot
         self.current_index = 0
-        self.cycle_number = 0
-        self.countries_per_batch = 30  # Optimized batch size for faster coverage
-        self.lock = threading.Lock()
-
+    
     def get_next_batch(self):
-        """Get next batch of countries in circular order"""
-        with self.lock:
-            batch = []
-            for _ in range(self.countries_per_batch):
-                batch.append(self.countries[self.current_index])
-                self.current_index += 1
-
-                if self.current_index >= len(self.countries):
-                    self.current_index = 0
-                    self.cycle_number += 1
-                    logger.info(f"🔁 ✓ CYCLE {self.cycle_number} COMPLETE!")
-
-            return batch, self.cycle_number, self.current_index
+        batch = []
+        for _ in range(self.countries_per_batch):
+            batch.append(self.countries[self.current_index])
+            self.current_index += 1
+            if self.current_index >= len(self.countries):
+                self.current_index = 0  # Retour au début (circulaire)
+        return batch, self.cycle_number, self.current_index
 ```
 
-**Implémentation - Stratégie de Fetch & Classification**:
+**Implémentation - Stratégie de Fetch & Limitation du Débit**:
 ```python
 def fetch_posts_for_country(country: str, limit: int = 5):
-    """Fetch posts for a country from Reddit"""
-    # Get subreddits for this country
-    subreddit_names = SUBREDDITS_BY_COUNTRY.get(country, [])
+    posts = []
+    # Stratégie intelligente selon le type de subreddit
+    if subreddit_name.lower() == country.lower():
+        search_results = subreddit.new(limit=per_sub_limit)  # Direct .new()
+    else:
+        search_results = subreddit.search(country, sort='new')  # .search()
     
-    for subreddit_name in subreddit_names:
-        try:
-            subreddit = reddit.subreddit(subreddit_name)
-            
-            # SMART STRATEGY: Direct .new() for country subreddits, .search() for others
-            if subreddit_name.lower() == country.lower().replace(' ', ''):
-                search_results = subreddit.new(limit=per_sub_limit)
-            else:
-                # For other subreddits, search by country keyword
-                search_results = subreddit.search(
-                    country,
-                    limit=per_sub_limit,
-                    time_filter='month',
-                    sort='new'
-                )
-
-            for submission in search_results:
-                # Classify post type and extract content
-                post_data = classify_and_extract_post(submission, country)
-                
-                if post_data:
-                    # PRIORITIZE LINK POSTS (news) by inserting at front
-                    if post_data.get('post_type') == 'link':
-                        posts.insert(0, post_data)
-                    else:
-                        posts.append(post_data)
-                        
-                # RATE LIMITING: 0.5s delay
-                time.sleep(0.5)
+    # Limitation du débit: 0.5s entre requêtes
+    time.sleep(0.5)  # Évite erreur 429 (60 req/min)
+    
+    # Classification: texte | lien | image | vidéo | social
+    post_data = classify_and_extract_post(submission, country)
+    return posts
 ```
 
 ---
@@ -1156,78 +1124,34 @@ def fetch_posts_for_country(country: str, limit: int = 5):
 | **Filtrage Social Media** | Ignore Twitter/Facebook/Instagram | Ces sites nécessitent connexion, économise ressources |
 | **Stratégie Fallback** | Conserve texte original si échec | Graceful degradation, pas de perte de données |
 
-**Implémentation - Détection & Traduction**:
+**Implémentation - Détection & Traduction Par Morceaux**:
 ```python
-def detect_and_translate(text: str, field_name: str = "text") -> str:
-    """
-    Detect language and translate to English if needed.
-    Returns translated text or original if already English.
-    """
-    if not text or len(text.strip()) < 10:
-        return text
+def detect_and_translate(text: str) -> str:
+    # Détection automatique de langue
+    lang = detect(text)  # langdetect
+    if lang == 'en':
+        return text  # Déjà en anglais
     
-    try:
-        # Detect language
-        lang = detect(text)
-        
-        if lang == 'en':
-            # Already English
-            return text
-        
-        # Translate to English
-        logger.info(f"🌐 Translating {field_name} from {lang} to English ({len(text)} chars)")
-        translator = GoogleTranslator(source=lang, target='en')
-        
-        # CHUNKED TRANSLATION: Split into chunks if too long (Google Translate limit ~5000 chars)
-        max_chunk = 4500
-        if len(text) <= max_chunk:
-            translated = translator.translate(text)
-        else:
-            # Split by sentences/paragraphs
-            chunks = []
-            current_chunk = ""
-            for sentence in text.split('. '):
-                if len(current_chunk) + len(sentence) < max_chunk:
-                    current_chunk += sentence + '. '
-                else:
-                    if current_chunk:
-                        chunks.append(current_chunk)
-                    current_chunk = sentence + '. '
-            if current_chunk:
-                chunks.append(current_chunk)
-            
-            # Translate each chunk
-            translated_chunks = [translator.translate(chunk) for chunk in chunks]
-            translated = ' '.join(translated_chunks)
-        
-        logger.info(f"✓ Translated {field_name}: {lang} → en")
-        return translated
-        
-    except LangDetectException:
-        # GRACEFUL DEGRADATION: Can't detect language, return original
-        logger.warning(f"⚠️  Could not detect language for {field_name}")
-        return text
-    except Exception as e:
-        logger.error(f"Translation error for {field_name}: {e}")
-        return text  # Return original on error
+    # Traduction par morceaux (max 4500 chars)
+    translator = GoogleTranslator(source=lang, target='en')
+    max_chunk = 4500
+    if len(text) > max_chunk:
+        chunks = [text[i:i+max_chunk] for i in range(0, len(text), max_chunk)]
+        translated = ' '.join([translator.translate(chunk) for chunk in chunks])
+    else:
+        translated = translator.translate(text)
+    return translated
 ```
 
 **Implémentation - Filtrage Social Media**:
 ```python
 def extract_article_content(url: str) -> dict:
-    """
-    Extract main content from article URL.
-    Skips social media links (require login).
-    Returns: {text, title, success}
-    """
-    # SKIP SOCIAL MEDIA (safety check)
-    social_media = ['twitter.com', 'x.com', 'facebook.com', 'instagram.com', 'tiktok.com',
-                   'linkedin.com', 'reddit.com', 'youtube.com', 'youtu.be']
+    # Ignore Twitter/Facebook/Instagram (nécessitent connexion)
+    social_media = ['twitter.com', 'facebook.com', 'instagram.com', 'youtube.com']
     if any(sm in url.lower() for sm in social_media):
-        logger.info(f"⏭️ Skipping social media URL: {url[:50]}")
-        return {'success': False, 'error': 'Social media URL (requires login)'}
-    
-    # Continue with extraction for legitimate news/blog URLs...
+        return {'success': False, 'error': 'Social media URL'}
+    # Continue with extraction...
+    return {'success': True, 'text': extracted_text, 'title': title}
 ```
 
 ---
@@ -1247,73 +1171,35 @@ def extract_article_content(url: str) -> dict:
 **Implémentation - DBSCAN Clustering**:
 ```python
 def _cluster_posts_ml(self, posts: list, country: str) -> list:
-    """Use TF-IDF vectorization and DBSCAN clustering to group similar posts"""
-    
-    # Create TF-IDF vectors
-    texts = [p['text'][:500] for p in posts]  # Limit to 500 chars
+    # Vectorisation TF-IDF
+    texts = [p['text'][:500] for p in posts]
     tfidf_matrix = self.vectorizer.fit_transform(texts)
-    
-    # Calculate cosine similarity matrix
-    # DBSCAN expects distance, so we use (1 - cosine_similarity)
     similarity_matrix = cosine_similarity(tfidf_matrix)
-    distance_matrix = np.clip(1 - similarity_matrix, 0, 2)
+    distance_matrix = 1 - similarity_matrix
     
-    # DBSCAN CLUSTERING (density-based, auto-detects number of clusters)
-    # eps=0.75 means posts with >25% similarity will cluster (1 - 0.75 = 0.25 similarity threshold)
-    # min_samples=2 requires at least 2 posts to form a cluster
-    # Lenient threshold to ensure related topics cluster together
+    # DBSCAN: eps=0.75 (similarité >25%), min_samples=2
     clustering = DBSCAN(eps=0.75, min_samples=2, metric='precomputed').fit(distance_matrix)
     
-    # Group posts by cluster
-    clusters = defaultdict(list)
-    individual_posts = []  # Track unclustered posts
-    
+    # Séparer clusters et posts individuels
+    clusters, individual_posts = defaultdict(list), []
     for idx, label in enumerate(clustering.labels_):
-        if label != -1:  # -1 means noise (unclustered)
+        if label != -1:  # Cluster
             clusters[label].append(posts[idx])
-        else:
-            # TREAT UNCLUSTERED POSTS AS INDIVIDUAL EVENTS
+        else:  # Individuel (label=-1)
             individual_posts.append(posts[idx])
     
-    print(f"DEBUG: DBSCAN found {len(clusters)} clusters and {len(individual_posts)} individual posts")
-    
-    # Create events from clusters
-    events = []
-    for cluster_id, cluster_posts in clusters.items():
-        event = self._create_event_from_posts(cluster_posts, country)
-        if event:
-            events.append(event)
-    
-    # Create events from individual posts (important standalone news)
-    for post in individual_posts:
-        event = self._create_event_from_posts([post], country)
-        if event:
-            events.append(event)
-    
-    return events
+    return self._create_events_from_clusters(clusters, individual_posts, country)
 ```
 
 **Implémentation - Vectorisation TF-IDF**:
 ```python
 class EventExtractor:
-    """Extracts thematic events from posts using clustering and extractive summarization"""
-    
     def __init__(self):
-        self.vectorizer = None
-        self.summarizer = "extractive"  # Use lightweight extractive summarization
-        
-        if MODELS_AVAILABLE:
-            try:
-                # Use TF-IDF for semantic similarity (lightweight, no PyTorch)
-                self.vectorizer = TfidfVectorizer(
-                    max_features=500,  # Limit features for speed
-                    ngram_range=(1, 2),  # Unigrams and bigrams
-                    min_df=1,  # Minimum document frequency
-                    stop_words='english'  # Remove common English words
-                )
-                print("✓ Event extraction ready: TfidfVectorizer + DBSCAN + extractive summarization")
-            except Exception as e:
-                print(f"Error initializing vectorizer: {e}")
+        self.vectorizer = TfidfVectorizer(
+            max_features=500,      # Limite features pour vitesse
+            ngram_range=(1, 2),    # Unigrams + bigrams
+            stop_words='english'   # Supprime mots communs
+        )
 ```
 
 ---
@@ -1330,79 +1216,27 @@ class EventExtractor:
 | **Fallback VADER** | Si RoBERTa échoue/OOM | Garantit fiabilité, rapidité (1ms), 3 émotions |
 | **Traitement Par Lots** | 50 événements à la fois | Équilibre mémoire et débit |
 
-**Implémentation - Modèle RoBERTa avec Fallback**:
+**Implémentation - RoBERTa avec Fallback VADER**:
 ```python
 class EmotionAnalyzer:
-    """Emotion analysis using RoBERTa + VADER fallback"""
-
     def __init__(self):
-        logger.info("🔥 Loading emotion analysis model...")
-        
-        # VADER FALLBACK: Always load (lightweight, no dependencies)
+        # Chargement RoBERTa (j-hartmann/emotion-english-distilroberta-base)
+        self.emotion_classifier = pipeline(
+            "text-classification",
+            model="j-hartmann/emotion-english-distilroberta-base",
+            device=-1  # CPU inference
+        )
         self.vader = SentimentIntensityAnalyzer()
-        
-        # ROBERTA: Try to load (heavy, requires transformers)
-        logger.info("  Loading emotion model...")
+    
+    def analyze_emotion(self, text: str) -> dict:
+        # Analyse avec limite 512 tokens
         try:
-            device = -1  # CPU inference
-            if torch is not None:
-                try:
-                    device = 0 if torch.cuda.is_available() else -1
-                except Exception:
-                    device = -1
-
-            self.emotion_classifier = pipeline(
-                "text-classification",
-                model="j-hartmann/emotion-english-distilroberta-base",
-                device=device  # -1 = CPU, 0 = GPU
-            )
-            self.emotion_available = True
-            logger.info("  ✓ Emotion model loaded (~500MB)")
-        except Exception as e:
-            logger.warning(f"  ⚠️ Emotion model failed to load: {e}")
-            self.emotion_classifier = None
-            self.emotion_available = False
-
-    def analyze_emotion(self, text):
-        """Analyze text emotion using RoBERTa or fallback methods"""
-        try:
-            # PRIMARY: RoBERTa (7 emotions, high accuracy)
-            if self.emotion_available and text and len(text) > 10:
-                results = self.emotion_classifier(text[:512])  # 512 token limit
-
-                if results and len(results) > 0:
-                    emotions_dict = {}
-                    for item in results:
-                        if isinstance(item, dict) and 'label' in item and 'score' in item:
-                            emotions_dict[item['label']] = round(item['score'], 3)
-
-                    if emotions_dict:
-                        # Get top emotion
-                        top_emotion = max(emotions_dict.items(), key=lambda x: x[1])[0]
-                        confidence = emotions_dict[top_emotion]
-
-                        return {
-                            'top_emotion': top_emotion,
-                            'confidence': round(confidence, 2),
-                            'all_emotions': emotions_dict
-                        }
-        except Exception as e:
-            logger.error(f"RoBERTa error: {e}")
-        
-        # FALLBACK: VADER (3 emotions, fast)
-        try:
+            results = self.emotion_classifier(text[:512])  # RoBERTa: 7 émotions
+            return {'top_emotion': results[0]['label'], 'confidence': results[0]['score']}
+        except:
+            # Fallback VADER si échec
             vader_scores = self.vader.polarity_scores(text)
-            
-            # Map VADER compound score to emotions
-            if vader_scores['compound'] >= 0.5:
-                return {'top_emotion': 'joy', 'confidence': 0.6, 'all_emotions': {'joy': 0.6}}
-            elif vader_scores['compound'] <= -0.5:
-                return {'top_emotion': 'sadness', 'confidence': 0.6, 'all_emotions': {'sadness': 0.6}}
-            else:
-                return {'top_emotion': 'neutral', 'confidence': 0.5, 'all_emotions': {'neutral': 0.5}}
-        except Exception as e:
-            logger.error(f"VADER fallback error: {e}")
-            return {'top_emotion': 'neutral', 'confidence': 0.3, 'all_emotions': {'neutral': 0.3}}
+            return {'top_emotion': 'neutral', 'confidence': 0.5}
 ```
 
 ---
@@ -1419,92 +1253,40 @@ class EmotionAnalyzer:
 | **Normalisation** | Lowercase pour cohérence | Prévient échecs de recherche (France ≠ france) |
 | **Stockage** | INSERT OR REPLACE dans country_emotions | Mise à jour idempotente |
 
-**Implémentation - Agrégation par Pays**:
+**Implémentation - Agrégation & Comptage**:
 ```python
-class CountryEmotionAggregator:
-    """Aggregates emotions at country level from events"""
-
-    def aggregate_country(self, country):
-        """Aggregate emotions for a specific country from events"""
-        conn = db.get_connection()
-        cursor = conn.cursor()
-        
-        # NORMALIZE COUNTRY NAME to lowercase for consistent lookup
-        country_normalized = country.lower()
-        
-        cursor.execute('''
-            SELECT emotion, confidence, post_ids
-            FROM events
-            WHERE LOWER(country) = ? AND is_analyzed = 1
-        ''', (country_normalized,))
-        
-        rows = cursor.fetchall()
-
-        if not rows:
-            return None
-
-        # AGGREGATE EMOTIONS and COUNT TOTAL POSTS
-        emotion_totals = defaultdict(float)
-        event_count = 0
-        total_post_count = 0
-
-        for emotion, confidence, post_ids_json in rows:
-            if emotion:
-                emotion_totals[emotion] += confidence
-                event_count += 1
-                # COUNT ACTUAL POSTS in this event (not event count!)
-                try:
-                    post_ids = json.loads(post_ids_json)
-                    total_post_count += len(post_ids)
-                except (json.JSONDecodeError, TypeError):
-                    pass  # Skip malformed post_ids
-
-        if event_count == 0:
-            return None
-
-        # AVERAGE EMOTIONS across events
-        avg_emotions = {k: v/event_count for k, v in emotion_totals.items()}
-        top_emotion = max(avg_emotions.items(), key=lambda x: x[1])[0]
-
-        return {
-            'country': country_normalized,
-            'emotions': avg_emotions,
-            'top_emotion': top_emotion,
-            'total_posts': total_post_count  # Total posts, not event count!
-        }
-
-    def aggregate_all_countries(self):
-        """Aggregate emotions for all countries from events"""
-        # ... iterate through all countries ...
+def aggregate_country(self, country: str) -> dict:
+    # Normalisation pays (lowercase)
+    country_normalized = country.lower()
+    
+    # Agrégation émotions: somme des confiances / nb événements
+    emotion_totals = defaultdict(float)
+    event_count, total_post_count = 0, 0
+    for emotion, confidence, post_ids_json in rows:
+        emotion_totals[emotion] += confidence
+        event_count += 1
+        # Comptage posts (pas événements!)
+        post_ids = json.loads(post_ids_json)
+        total_post_count += len(post_ids)  # Nombre réel de posts
+    
+    # Moyenne
+    avg_emotions = {k: v/event_count for k, v in emotion_totals.items()}
+    top_emotion = max(avg_emotions.items(), key=lambda x: x[1])[0]
+    
+    return {'country': country_normalized, 'emotions': avg_emotions, 
+            'top_emotion': top_emotion, 'total_posts': total_post_count}
 ```
 
 **Implémentation - Stockage Idempotent**:
 ```python
-@app.route('/aggregate/country/<country>', methods=['POST'])
-def aggregate_country(country):
-    """Aggregate emotions for a specific country"""
-    result = aggregator.aggregate_country(country)
-    
-    if result:
-        # Store in database with INSERT OR REPLACE (idempotent)
-        try:
-            conn = db.get_connection()
-            cursor = conn.cursor()
-            cursor.execute('''
-                INSERT OR REPLACE INTO country_emotions
-                (country, emotions, top_emotion, total_posts)
-                VALUES (?, ?, ?, ?)
-            ''', (
-                result['country'],
-                json.dumps(result['emotions']),
-                result['top_emotion'],
-                result['total_posts']
-            ))
-            conn.commit()
-        except Exception as e:
-            logger.error(f"Error storing aggregation: {e}")
-
-        return jsonify(result)
+def store_aggregation(self, result: dict):
+    # INSERT OR REPLACE pour mise à jour idempotente
+    cursor.execute('''
+        INSERT OR REPLACE INTO country_emotions
+        (country, emotions, top_emotion, total_posts)
+        VALUES (?, ?, ?, ?)
+    ''', (country, json.dumps(emotions), top_emotion, total_posts))
+    conn.commit()
 ```
 
 ---
@@ -1521,93 +1303,45 @@ def aggregate_country(country):
 | **Timeouts Différenciés** | Data Fetcher: 90s, Content Extractor: 120s, ML: 120s, Aggregator: 60s | Ajustés aux temps réels de traitement |
 | **Orchestration Séquentielle** | Data → Content → Event → ML → Aggregator | Chaque étape dépend de la précédente |
 
-**Implémentation - Pipeline Background Thread**:
+**Implémentation - Pipeline avec Timeouts Différenciés**:
 ```python
 def run_pipeline_continuous():
-    """Background thread that runs pipeline every 30 seconds"""
     while True:
-        try:
-            logger.info("🔄 Starting pipeline cycle...")
-            
-            # SEQUENTIAL ORCHESTRATION
-            # Stage 1: Data Collection
-            response = requests.post(
-                'http://localhost:5001/fetch/batch',
-                timeout=90  # 90s timeout
-            )
-            
-            # Stage 2: Content Extraction
-            response = requests.post(
-                'http://localhost:5007/extract/batch',
-                timeout=120  # 120s timeout (translation takes time)
-            )
-            
-            # Stage 3: Event Extraction
-            response = requests.post(
-                'http://localhost:5004/extract/batch',
-                timeout=120  # 120s timeout (clustering + summarization)
-            )
-            
-            # Stage 4: ML Analysis
-            response = requests.post(
-                'http://localhost:5005/analyze/batch',
-                timeout=120  # 120s timeout (RoBERTa inference)
-            )
-            
-            # Stage 5: Aggregation
-            response = requests.post(
-                'http://localhost:5003/aggregate/all',
-                timeout=60  # 60s timeout
-            )
-            
-            logger.info("✓ Pipeline cycle complete")
-            
-        except Exception as e:
-            logger.error(f"Pipeline error: {e}")
+        # Orchestration séquentielle avec timeouts différents
+        requests.post('http://localhost:5001/fetch/batch', timeout=90)      # Data Fetcher
+        requests.post('http://localhost:5007/extract/batch', timeout=120)   # Content Extractor
+        requests.post('http://localhost:5004/extract/batch', timeout=120)   # Event Extractor
+        requests.post('http://localhost:5005/analyze/batch', timeout=120)   # ML Analyzer
+        requests.post('http://localhost:5003/aggregate/all', timeout=60)    # Aggregator
         
-        # WAIT 30 SECONDS before next cycle
-        time.sleep(30)
+        time.sleep(30)  # Cycle de 30 secondes
 
-# Start background thread
-pipeline_thread = threading.Thread(target=run_pipeline_continuous, daemon=True)
-pipeline_thread.start()
+# Thread d'arrière-plan
+threading.Thread(target=run_pipeline_continuous, daemon=True).start()
 ```
 
-**Implémentation - Circuit Breaker Pattern**:
+**Implémentation - Circuit Breaker**:
 ```python
 class CircuitBreaker:
-    """Circuit breaker pattern to prevent cascade failures"""
-    
     def __init__(self, failure_threshold=5, timeout=60):
         self.failure_count = 0
         self.failure_threshold = failure_threshold
         self.timeout = timeout
-        self.last_failure_time = None
         self.state = 'closed'  # closed, open, half-open
     
     def call(self, func):
-        # Check if circuit is open
         if self.state == 'open':
-            if time.time() - self.last_failure_time > self.timeout:
-                self.state = 'half-open'
-            else:
-                raise Exception("Circuit breaker is OPEN")
+            raise Exception("Circuit breaker is OPEN")
         
         try:
             result = func()
-            # Success - reset
-            self.failure_count = 0
+            self.failure_count = 0  # Reset sur succès
             self.state = 'closed'
             return result
         except Exception as e:
             self.failure_count += 1
-            self.last_failure_time = time.time()
-            
-            # OPEN CIRCUIT after 5 failures
-            if self.failure_count >= self.failure_threshold:
-                self.state = 'open'
-                logger.warning(f"🔴 Circuit breaker OPENED after {self.failure_count} failures")
-            
+            if self.failure_count >= self.failure_threshold:  # 5 échecs
+                self.state = 'open'      # Ouvrir circuit → 60s
             raise e
 ```
 
