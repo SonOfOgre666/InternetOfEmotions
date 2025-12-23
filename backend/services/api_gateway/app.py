@@ -22,6 +22,7 @@ SERVICES = {
 }
 
 @app.route('/health')
+@app.route('/api/health')
 def health():
     return jsonify({
         'status': 'healthy',
@@ -38,18 +39,29 @@ def proxy(service_name, path):
     url = f"{SERVICES[service_name]}/api/{path}"
 
     try:
+        # Check if this is a streaming request
+        is_stream = 'stream' in path or 'stream' in request.args
+        
         resp = requests.request(
             method=request.method,
             url=url,
             headers={key: value for key, value in request.headers if key != 'Host'},
             data=request.get_data(),
             params=request.args,
-            timeout=30,
-            allow_redirects=False
+            timeout=None if is_stream else 30,
+            allow_redirects=False,
+            stream=is_stream
         )
 
         excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
         headers = [(name, value) for name, value in resp.raw.headers.items() if name.lower() not in excluded_headers]
+
+        if is_stream:
+            def generate():
+                for line in resp.iter_lines():
+                    if line:
+                        yield line + b'\n'
+            return Response(generate(), resp.status_code, headers)
 
         return Response(resp.content, resp.status_code, headers)
 

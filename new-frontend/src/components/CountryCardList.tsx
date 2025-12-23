@@ -2,6 +2,7 @@
 
 import { emotionConfig, type CountryData } from '@/lib/data';
 import * as flags from 'country-flag-icons/react/3x2';
+import { getIso2 } from '@/lib/utils';
 
 interface CountryCardListProps {
   countries: CountryData[];
@@ -17,20 +18,7 @@ export function CountryCardList({
   hoveredCountry,
 }: CountryCardListProps) {
   const getFlagComponent = (iso: string) => {
-    // Map 3-letter codes to 2-letter codes
-    const isoMap: Record<string, string> = {
-      'USA': 'US',
-      'GBR': 'GB',
-      'DEU': 'DE',
-      'FRA': 'FR',
-      'IND': 'IN',
-      'JPN': 'JP',
-      'BRA': 'BR',
-      'CAN': 'CA',
-      'AUS': 'AU',
-      'CHN': 'CN',
-    };
-    const code = isoMap[iso] || iso;
+    const code = getIso2(iso);
     const FlagComponent = (flags as Record<string, React.ComponentType<{ className?: string }>>)[code];
     return FlagComponent ? <FlagComponent className="w-8 h-6 rounded" /> : <span className="text-2xl">🏳️</span>;
   };

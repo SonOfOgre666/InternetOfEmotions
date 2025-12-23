@@ -60,10 +60,48 @@ def get_stats():
 @app.route('/api/stream')
 def stream():
     def generate():
+        last_id = 0
         while True:
-            data = get_stats()
-            yield f"data: {json.dumps(data.get_json())}\n\n"
-            time.sleep(30)
+            try:
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                
+                # Fetch posts newer than last_id
+                cursor.execute("""
+                    SELECT rp.id, rp.country, ap.emotion, ap.confidence, rp.title, rp.text, 
+                           EXTRACT(EPOCH FROM rp.reddit_created_at) as timestamp, 
+                           rp.subreddit, rp.url
+                    FROM raw_posts rp
+                    JOIN analyzed_posts ap ON rp.id = ap.post_id
+                    WHERE rp.id > %s
+                    ORDER BY rp.id ASC
+                    LIMIT 5
+                """, (last_id,))
+                
+                posts = cursor.fetchall()
+                cursor.close()
+                conn.close()
+
+                for post in posts:
+                    last_id = post['id']
+                    # Convert to frontend format
+                    post_data = {
+                        'id': str(post['id']),
+                        'country': post['country'],
+                        'emotion': post['emotion'],
+                        'confidence': int(post['confidence'] * 100) if post['confidence'] <= 1.0 else int(post['confidence']),
+                        'title': post['title'],
+                        'text': post['text'],
+                        'timestamp': int(post['timestamp']),
+                        'subreddit': post['subreddit'],
+                        'url': post['url']
+                    }
+                    yield f"data: {json.dumps(post_data)}\n\n"
+                
+                time.sleep(5) # Poll every 5 seconds
+            except Exception as e:
+                print(f"Stream error: {e}")
+                time.sleep(10)
 
     return Response(generate(), mimetype='text/event-stream')
 

@@ -1,6 +1,6 @@
 import type { Emotion } from './data';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export interface BackendPost {
   id: string;
@@ -24,11 +24,21 @@ export interface BackendStats {
   max_age_days: number;
 }
 
+export interface AggregatedCountry {
+  id: number;
+  country: string;
+  emotion: Emotion;
+  confidence: number;
+  coords: [number, number];
+  post_count: number;
+  distribution?: Record<Emotion, number>;
+}
+
 export interface BackendEmotionsResponse {
-  emotions: BackendPost[];
+  emotions: AggregatedCountry[];
   count: number;
-  countries_ready: number;
-  max_age_days: number;
+  countries_ready?: number;
+  max_age_days?: number;
 }
 
 export interface BackendHealthResponse {

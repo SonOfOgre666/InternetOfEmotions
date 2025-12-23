@@ -134,9 +134,26 @@ export function useBackend(): UseBackendReturn {
       setDemoMode(health.demo_mode);
       setIsBackendAvailable(true);
 
-      // Fetch emotions
+      // Fetch emotions (aggregated country data)
       const emotionsData = await fetchEmotions();
-      const convertedCountries = convertPostsToCountries(emotionsData.emotions);
+      
+      const convertedCountries: CountryData[] = emotionsData.emotions.map(country => ({
+        iso: getCountryISO(country.country),
+        name: country.country,
+        emoji: getCountryEmoji(country.country),
+        capital: '',
+        emotion: country.emotion,
+        confidence: Math.round(country.confidence * 100),
+        postCount: country.post_count,
+        trend: 'steady',
+        distribution: country.distribution || {
+          [country.emotion]: 100,
+          anger: 0, fear: 0, sadness: 0, joy: 0, neutral: 0, surprise: 0, disgust: 0
+        } as Record<Emotion, number>,
+        topTopics: [],
+        recentPosts: [],
+      }));
+      
       setCountries(convertedCountries);
 
       // Fetch stats

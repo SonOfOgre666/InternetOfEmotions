@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import * as flags from 'country-flag-icons/react/3x2';
 import type * as GeoJSONTypes from 'geojson';
+import { getIso2 } from '@/lib/utils';
 
 const MapContainer = dynamic(
   () => import('react-leaflet').then((mod) => mod.MapContainer),
@@ -33,11 +34,7 @@ export function DetailedAnalytics({ country, onClose }: DetailedAnalyticsProps) 
   const [mapZoom, setMapZoom] = useState(2);
 
   const getFlagComponent = (iso: string) => {
-    const isoMap: Record<string, string> = {
-      'USA': 'US', 'GBR': 'GB', 'DEU': 'DE', 'FRA': 'FR', 'IND': 'IN',
-      'JPN': 'JP', 'BRA': 'BR', 'CAN': 'CA', 'AUS': 'AU', 'CHN': 'CN',
-    };
-    const code = isoMap[iso] || iso;
+    const code = getIso2(iso);
     const FlagComponent = (flags as Record<string, React.ComponentType<{ className?: string }>>)[code];
     return FlagComponent ? <FlagComponent className="w-12 h-8 rounded shadow-sm" /> : <span className="text-3xl">🏳️</span>;
   };
