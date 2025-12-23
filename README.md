@@ -782,6 +782,4 @@ MIT License - see LICENSE file for details.
 
 ---
 
-**Last Updated**: December 16, 2025  
-**Version**: 2.0.0  
 **Status**: ✅ Production Ready
